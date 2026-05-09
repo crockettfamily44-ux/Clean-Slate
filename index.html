@@ -5,102 +5,112 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clean Slate</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Alpine Persist Plugin (Must come BEFORE Alpine core) -->
   <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
-  <!-- Alpine Core -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- This guarantees hidden elements stay hidden until clicked -->
+  <style> [x-cloak] { display: none !important; } </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-900 antialiased overflow-hidden selection:bg-indigo-100" x-data="habitApp()">
+<body class="bg-slate-50 font-sans text-slate-900 antialiased overflow-x-hidden selection:bg-indigo-100" x-data="habitApp()">
 
-  <!-- Swapped Audio: A drier, crisper tick/snap -->
   <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2569/2569-preview.mp3" preload="auto"></audio>
 
   <!-- Main App Layout -->
-  <div class="flex h-screen w-full">
-    
-    <!-- Main Center Area -->
-    <div class="flex-1 overflow-y-auto pb-24">
-      <div class="max-w-6xl mx-auto p-6 md:p-10">
+  <div class="min-h-screen w-full pb-24">
+    <div class="max-w-6xl mx-auto p-6 md:p-10">
+      
+      <!-- Header Area (Responsive Layout) -->
+      <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
         
-        <!-- Header -->
-        <header class="flex justify-between items-end mb-10">
-          <div>
-            <h1 class="text-4xl font-light tracking-tight text-slate-800">Clean Slate.</h1>
-            <p class="text-slate-500 mt-2">
-              <span x-text="habits.length"></span> habits today • <span x-text="totalDailyMinutes"></span> total minutes
-            </p>
-          </div>
-          <div class="flex gap-2">
-            <!-- New Add Habit Button -->
-            <button @click="isAddModalOpen = true" class="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors px-4 py-2 rounded-full shadow-sm">
-              + Add
+        <!-- Left: Title & Stats -->
+        <div>
+          <h1 class="text-4xl font-light tracking-tight text-slate-800">Clean Slate.</h1>
+          <p class="text-slate-500 mt-2">
+            <span x-text="habits.length"></span> habits today • <span x-text="totalDailyMinutes"></span> total minutes
+          </p>
+        </div>
+
+        <!-- Right: Buttons & Weekly Progress -->
+        <div class="flex flex-col items-end gap-4 w-full md:w-auto">
+          
+          <!-- Action Buttons -->
+          <div class="flex gap-2 w-full justify-end">
+            <button @click="isAddModalOpen = true" class="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors px-5 py-2 rounded-full shadow-sm">
+              + Add Habit
             </button>
-            <button @click="isEditing = !isEditing" :class="isEditing ? 'bg-red-50 text-red-600' : 'bg-white text-slate-600 border-slate-200'" class="text-sm font-medium border hover:bg-slate-50 transition-colors px-4 py-2 rounded-full shadow-sm">
+            <button @click="isEditing = !isEditing" :class="isEditing ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-slate-600 border-slate-200'" class="text-sm font-medium border hover:bg-slate-50 transition-colors px-5 py-2 rounded-full shadow-sm w-24">
               <span x-text="isEditing ? 'Done' : 'Edit'"></span>
             </button>
           </div>
-        </header>
 
-        <!-- The 3 Columns: Morning, Afternoon, Evening -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <template x-for="timeBlock in ['morning', 'afternoon', 'evening']" :key="timeBlock">
-            <div>
-              <h2 class="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-4 border-b border-slate-200 pb-2" x-text="timeBlock"></h2>
-              
-              <template x-for="habit in habits.filter(h => h.timeOfDay === timeBlock)" :key="habit.id">
-                <div @click="if(!isEditing) toggleHabit(habit.id)" 
-                     :class="habit.checked ? 'bg-indigo-600 text-white shadow-md' : 'bg-white/80 backdrop-blur-md border-slate-200 shadow-sm'"
-                     class="relative overflow-hidden border rounded-3xl p-5 mb-4 transition-all duration-300 transform"
-                     x-bind:class="!isEditing && 'cursor-pointer active:scale-95 hover:shadow-md'">
-                  
-                  <div class="flex justify-between items-start relative z-10">
-                    <div>
-                      <div class="flex items-center gap-2 mb-1">
-                        <span class="text-lg" x-text="categoryIcons[habit.category]"></span>
-                        <p :class="habit.checked ? 'text-indigo-200' : 'text-slate-400'" class="text-[10px] uppercase tracking-widest font-bold transition-colors">
-                          <span x-text="habit.category"></span> • <span x-text="habit.duration"></span> min
-                        </p>
-                      </div>
-                      <h2 class="text-lg font-medium leading-tight" x-text="habit.title"></h2>
-                    </div>
-                    
-                    <template x-if="!isEditing">
-                      <div>
-                        <svg x-show="!habit.checked" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-slate-300 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /></svg>
-                        <svg x-show="habit.checked" style="display: none;" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      </div>
-                    </template>
-
-                    <template x-if="isEditing">
-                      <button @click="deleteHabit(habit.id)" class="text-red-400 hover:text-red-600 p-1 bg-white rounded-full shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                      </button>
-                    </template>
-                  </div>
-                  
-                  <div class="absolute bottom-0 left-0 w-full opacity-[0.05] pointer-events-none text-black">
-                    <svg viewBox="0 0 1440 320" class="w-full h-12 object-cover"><path fill="currentColor" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,149.3C672,149,768,203,864,213.3C960,224,1056,192,1152,165.3C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>
-                  </div>
-                </div>
-              </template>
+          <!-- Horizontal Weekly Goal Widget -->
+          <div class="w-full md:w-64 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-3">
+              <span class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Weekly Goal</span>
+              <span class="text-xs font-bold text-indigo-600">35%</span>
             </div>
-          </template>
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden relative">
+              <!-- Note: Hardcoded to 35% until we build the historical tracking -->
+              <div class="absolute top-0 left-0 h-full bg-indigo-500 rounded-full transition-all duration-1000" style="width: 35%;"></div>
+            </div>
+          </div>
+          
         </div>
-      </div>
-    </div>
+      </header>
 
-    <!-- Right Sidebar: Weekly Progress -->
-    <div class="w-24 bg-white border-l border-slate-200 hidden md:flex flex-col items-center py-10 z-10 shadow-sm relative">
-      <h3 class="text-[10px] uppercase tracking-widest text-slate-400 font-bold rotate-90 whitespace-nowrap mb-16 absolute top-24">Weekly Goal</h3>
-      <div class="flex-1 w-4 bg-slate-100 rounded-full relative overflow-hidden mt-16 mb-4">
-        <div class="absolute bottom-0 w-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out" style="height: 35%;"></div>
+      <!-- The 3 Columns: Morning, Afternoon, Evening -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <template x-for="timeBlock in ['morning', 'afternoon', 'evening']" :key="timeBlock">
+          <div>
+            <h2 class="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-4 border-b border-slate-200 pb-2" x-text="timeBlock"></h2>
+            
+            <template x-for="habit in habits.filter(h => h.timeOfDay === timeBlock)" :key="habit.id">
+              <div @click="if(!isEditing) toggleHabit(habit.id)" 
+                   :class="[
+                     habit.checked && !isEditing ? 'bg-indigo-600 text-white shadow-md' : 'bg-white/80 backdrop-blur-md shadow-sm',
+                     isEditing ? 'border-red-200 bg-red-50/30' : 'border-slate-200'
+                   ]"
+                   class="relative overflow-hidden border rounded-3xl p-5 mb-4 transition-all duration-300 transform"
+                   x-bind:class="!isEditing && 'cursor-pointer active:scale-95 hover:shadow-md'">
+                
+                <div class="flex justify-between items-start relative z-10">
+                  <div>
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-lg" x-text="categoryIcons[habit.category]"></span>
+                      <p :class="habit.checked && !isEditing ? 'text-indigo-200' : 'text-slate-400'" class="text-[10px] uppercase tracking-widest font-bold transition-colors">
+                        <span x-text="habit.category"></span> • <span x-text="habit.duration"></span> min
+                      </p>
+                    </div>
+                    <h2 class="text-lg font-medium leading-tight" x-text="habit.title"></h2>
+                  </div>
+                  
+                  <template x-if="!isEditing">
+                    <div>
+                      <svg x-show="!habit.checked" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-slate-300 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /></svg>
+                      <svg x-show="habit.checked" x-cloak xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                  </template>
+
+                  <!-- Delete Button (Only visible when editing) -->
+                  <template x-if="isEditing">
+                    <button @click.stop="deleteHabit(habit.id)" class="text-red-500 hover:text-red-700 hover:bg-red-100 p-2 bg-white rounded-full shadow-sm transition-colors mt-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                  </template>
+                </div>
+                
+                <div class="absolute bottom-0 left-0 w-full opacity-[0.05] pointer-events-none text-black">
+                  <svg viewBox="0 0 1440 320" class="w-full h-12 object-cover"><path fill="currentColor" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,149.3C672,149,768,203,864,213.3C960,224,1056,192,1152,165.3C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
       </div>
-      <p class="text-sm font-bold text-slate-700">35%</p>
     </div>
   </div>
 
   <!-- Bottom Bar: Weighted Daily Progress -->
-  <div class="fixed bottom-0 left-0 w-full md:pr-24 bg-white border-t border-slate-200 p-4 px-6 md:px-10 z-20 flex items-center gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+  <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 p-4 px-6 md:px-10 z-20 flex items-center gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
     <div class="font-medium text-sm text-slate-600 whitespace-nowrap">Daily Progress</div>
     <div class="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden relative">
       <div class="absolute top-0 left-0 h-full bg-indigo-600 transition-all duration-700 ease-out" :style="`width: ${dailyProgressPercentage}%`"></div>
@@ -109,14 +119,14 @@
   </div>
 
   <!-- Add Habit Modal -->
-  <div x-show="isAddModalOpen" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+  <div x-show="isAddModalOpen" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
     <div @click.away="isAddModalOpen = false" class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl transform transition-all">
       <h3 class="text-xl font-medium mb-4 text-slate-800">New Habit</h3>
       
       <div class="space-y-4">
         <div>
           <label class="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-1">Title</label>
-          <input x-model="newHabit.title" type="text" placeholder="e.g., Read 10 Pages" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+          <input x-model="newHabit.title" type="text" placeholder="e.g., Water the lawn" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
         </div>
         
         <div class="grid grid-cols-2 gap-4">
@@ -158,12 +168,14 @@
         isEditing: false,
         isAddModalOpen: false,
         
+        // Persist the last opened date to handle the midnight reset
+        lastOpenedDate: this.$persist(new Date().toDateString()),
+        
         categoryIcons: {
           'Faith': '🕊️', 'Family': '👨‍👩‍👧', 'Friends/Others': '🤝', 
           'Health/Sleep': '🏃', 'Work': '💼', 'Home': '🏠', 'Leisure': '📖'
         },
 
-        // This object holds the data for the new form
         newHabit: {
           title: '',
           category: 'Health/Sleep',
@@ -171,7 +183,6 @@
           duration: 15
         },
 
-        // $persist wraps the array so it saves to Local Storage automatically!
         habits: this.$persist([
           { id: 1, title: 'Morning Reading', timeOfDay: 'morning', category: 'Faith', duration: 15, checked: false },
           { id: 2, title: '400m Interval Run', timeOfDay: 'morning', category: 'Health/Sleep', duration: 45, checked: false },
@@ -181,6 +192,16 @@
           { id: 6, title: 'Watch Cult Classic', timeOfDay: 'evening', category: 'Leisure', duration: 90, checked: false }
         ]),
 
+        // Initialize is called automatically by Alpine when the app loads
+        init() {
+          const today = new Date().toDateString();
+          // The Midnight Reset Logic
+          if (this.lastOpenedDate !== today) {
+            this.habits.forEach(habit => habit.checked = false);
+            this.lastOpenedDate = today;
+          }
+        },
+
         toggleHabit(id) {
           const habit = this.habits.find(h => h.id === id);
           if (habit) {
@@ -188,7 +209,7 @@
             if (habit.checked) {
               const audio = document.getElementById('clickSound');
               audio.currentTime = 0; 
-              audio.play().catch(e => console.log("Audio play failed (browser policy)"));
+              audio.play().catch(e => console.log("Audio play failed"));
             }
           }
         },
@@ -198,10 +219,10 @@
         },
 
         addHabit() {
-          if (!this.newHabit.title.trim()) return; // Don't add blank tasks
+          if (!this.newHabit.title.trim()) return; 
           
           this.habits.push({
-            id: Date.now(), // Creates a unique ID based on the exact millisecond
+            id: Date.now(), 
             title: this.newHabit.title,
             timeOfDay: this.newHabit.timeOfDay,
             category: this.newHabit.category,
@@ -209,7 +230,6 @@
             checked: false
           });
           
-          // Reset form and close modal
           this.newHabit.title = '';
           this.newHabit.duration = 15;
           this.isAddModalOpen = false;
