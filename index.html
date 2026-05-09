@@ -62,7 +62,7 @@
             <div class="flex justify-between items-center mb-3">
               <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold flex items-center gap-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Sync (Mock)
+                Sync (Live)
               </span>
             </div>
             <div class="space-y-2.5">
@@ -99,7 +99,6 @@
                     <input type="number" x-model="blockGoals[timeBlock]" class="w-12 text-[10px] font-bold border border-emerald-400 bg-emerald-50 text-emerald-800 rounded px-1 outline-none text-center h-4">
                   </template>
                 </div>
-
               </h2>
               <div class="w-full h-1 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
                 <div class="h-full bg-slate-400 transition-all duration-700" :style="'width: ' + Math.min((blockMinutes(timeBlock) / blockGoals[timeBlock]) * 100, 100) + '%'"></div>
@@ -285,7 +284,6 @@
         isHistoryModalOpen: false,
         editingHabitId: null, 
         
-        // Config Data
         daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         currentDayString: new Date().toLocaleDateString('en-US', { weekday: 'short' }),
         
@@ -293,7 +291,38 @@
         blockGoals: Alpine.$persist({ morning: 120, afternoon: 120, evening: 120 }),
         habitTemplates: Alpine.$persist([]),
 
-        healthData: { calories: 520, goalCalories: 600, exercise: 42, goalExercise: 30, sleep: 8.1, goalSleep: 8 },
+        // Live Health Data State
+        healthData: { calories: 0, goalCalories: 600, exercise: 0, goalExercise: 30, sleep: 0, goalSleep: 8 },
+
+        // Fetch Data from Supabase
+        async fetchHealthData() {
+          // 🚨 IMPORTANT: Paste your Supabase URL and Anon Key inside the quotes below! 🚨
+          const supabaseUrl = 'YOUR_SUPABASE_URL'; 
+          const anonKey = 'YOUR_ANON_KEY'; 
+          
+          // DO NOT CHANGE the spelling of 'health_metrics' below unless it's spelled differently in Supabase.
+          const today = new Date();
+          const dateString = today.toISOString().split('T')[0];
+
+          try {
+            const response = await fetch(`${supabaseUrl}/rest/v1/health_metrics?date=eq.${dateString}&select=*`, {
+              headers: {
+                'apikey': anonKey,
+                'Authorization': `Bearer ${anonKey}`
+              }
+            });
+            const data = await response.json();
+            
+            if (data && data.length > 0) {
+              const todayData = data[data.length - 1]; 
+              this.healthData.calories = todayData.calories || 0;
+              this.healthData.exercise = todayData.exercise || 0;
+              this.healthData.sleep = todayData.sleep ? Math.round(todayData.sleep * 10) / 10 : 0; 
+            }
+          } catch (error) {
+            console.log("Could not fetch Apple Watch data:", error);
+          }
+        },
 
         lastOpenedDate: Alpine.$persist(new Date().toDateString()),
         habits: Alpine.$persist([
@@ -305,18 +334,19 @@
         newHabit: { title: '', category: 'Health/Sleep', timeOfDay: 'morning', duration: 15, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
 
         init() {
-          // Midnight Reset
           const today = new Date().toDateString();
           if (this.lastOpenedDate !== today) {
             this.habits.forEach(habit => habit.checked = false);
             this.lastOpenedDate = today;
           }
 
-          // Safety net for old habits missing the 'days' array
           this.habits.forEach((h, i) => { 
              if(h.order === undefined) h.order = i; 
              if(!h.days) h.days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
           });
+
+          // Fetch the live health data when the app loads
+          this.fetchHealthData();
 
           this.$nextTick(() => {
             ['morning', 'afternoon', 'evening'].forEach(timeBlock => {
@@ -370,7 +400,6 @@
           return [...healthTiles, ...this.habits].sort((a, b) => (a.order || 0) - (b.order || 0));
         },
 
-        // Filters combined habits to only show what is scheduled for TODAY
         get currentDayHabits() {
           return this.combinedHabits.filter(h => h.days.includes(this.currentDayString));
         },
@@ -395,7 +424,6 @@
           this.habits = this.habits.filter(h => h.id !== id);
         },
 
-        // Template Logic
         fillFromTemplate(temp) {
           this.newHabit.title = temp.title;
           this.newHabit.category = temp.category;
@@ -429,7 +457,6 @@
         saveHabit() {
           if (!this.newHabit.title.trim() || this.newHabit.days.length === 0) return; 
           
-          // Auto-save to templates if it's a new title
           if (!this.habitTemplates.some(t => t.title.toLowerCase() === this.newHabit.title.toLowerCase())) {
             this.habitTemplates.push({
               title: this.newHabit.title, category: this.newHabit.category, timeOfDay: this.newHabit.timeOfDay, duration: parseInt(this.newHabit.duration)
