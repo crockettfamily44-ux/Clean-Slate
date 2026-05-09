@@ -14,111 +14,96 @@
     .sortable-drag { cursor: grabbing !important; }
   </style>
 </head>
-<!-- Added a subtle gradient background for depth -->
-<body class="bg-gradient-to-br from-slate-50 to-slate-200 font-sans text-slate-900 antialiased overflow-x-hidden selection:bg-indigo-100 min-h-screen" x-data="habitApp">
+<body class="bg-gradient-to-br from-indigo-50 via-white to-cyan-50 font-sans text-slate-900 antialiased overflow-x-hidden selection:bg-indigo-100 min-h-screen" x-data="habitApp">
 
-  <!-- New Sound: Mechanical Stapler Clack -->
-  <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+  <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2995/2995-preview.mp3" preload="auto"></audio>
 
-  <!-- Main App Layout -->
   <div class="w-full pb-24">
     <div class="max-w-6xl mx-auto p-6 md:p-10">
       
-      <!-- Header Area -->
       <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
         <div>
-          <h1 class="text-4xl font-light tracking-tight text-slate-800 drop-shadow-sm">Clean Slate.</h1>
-          <p class="text-slate-500 mt-2">
+          <h1 class="text-4xl font-light tracking-tight text-slate-900 drop-shadow-sm">Clean Slate.</h1>
+          <p class="text-slate-600 mt-2 font-medium">
             <span x-text="habits.length"></span> habits today • <span x-text="totalDailyMinutes"></span> total minutes
           </p>
         </div>
 
         <div class="flex flex-col items-end gap-4 w-full md:w-auto">
           <div class="flex gap-2 w-full justify-end">
-            <!-- Now triggers openAddModal -->
-            <button @click="openAddModal()" class="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors px-5 py-2 rounded-full shadow-md hover:shadow-lg transform active:scale-95">
+            <button @click="openAddModal()" class="text-sm font-medium text-white bg-indigo-600 border border-indigo-800 hover:bg-indigo-700 transition-colors px-5 py-2 rounded-full shadow-sm hover:shadow-md transform active:scale-95">
               + Add Habit
             </button>
-            <button @click="isEditing = !isEditing" :class="isEditing ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-inner' : 'bg-white text-slate-600 border-slate-200 shadow-sm'" class="text-sm font-medium border transition-all px-5 py-2 rounded-full w-24 transform active:scale-95">
+            <button @click="isEditing = !isEditing" :class="isEditing ? 'bg-indigo-100 text-indigo-800 border-indigo-800 shadow-inner' : 'bg-white text-slate-700 border-slate-800 shadow-sm'" class="text-sm font-medium border transition-all px-5 py-2 rounded-full w-24 transform active:scale-95">
               <span x-text="isEditing ? 'Done' : 'Edit'"></span>
             </button>
           </div>
 
-          <div class="w-full md:w-64 bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-md border border-white/50">
+          <div class="w-full md:w-64 bg-white p-4 rounded-2xl shadow-sm border border-slate-800">
             <div class="flex justify-between items-center mb-3">
-              <span class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Weekly Goal</span>
+              <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Weekly Goal</span>
               <span class="text-xs font-bold text-indigo-600">35%</span>
             </div>
-            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden relative shadow-inner">
+            <div class="w-full h-2 bg-slate-100 border border-slate-200 rounded-full overflow-hidden relative shadow-inner">
               <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full transition-all duration-1000" style="width: 35%;"></div>
             </div>
           </div>
         </div>
       </header>
 
-      <!-- The 3 Columns -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <template x-for="timeBlock in ['morning', 'afternoon', 'evening']" :key="timeBlock">
           <div>
-            <!-- Column Header with 120 Minute Goal -->
             <div class="mb-4">
-              <h2 class="flex justify-between items-end mb-2">
-                <span class="text-xs uppercase tracking-widest text-slate-500 font-bold drop-shadow-sm" x-text="timeBlock"></span>
-                <span x-show="!isEditing" class="text-[10px] text-slate-400 font-medium" x-text="blockMinutes(timeBlock) + ' / 120 min'"></span>
-                <span x-show="isEditing" x-cloak class="text-indigo-400 normal-case text-[10px]">Drag to reorder / Click to edit</span>
+              <h2 class="flex justify-between items-end mb-2 border-b border-slate-300 pb-2">
+                <span class="text-xs uppercase tracking-widest text-slate-600 font-bold" x-text="timeBlock"></span>
+                <span x-show="!isEditing" class="text-[10px] text-slate-500 font-bold" x-text="blockMinutes(timeBlock) + ' / 120 min'"></span>
+                <span x-show="isEditing" x-cloak class="text-indigo-600 normal-case text-[10px] font-medium">Drag to reorder / Click to edit</span>
               </h2>
-              <!-- Mini Goal Progress Bar -->
-              <div class="w-full h-1 bg-slate-200/60 rounded-full overflow-hidden">
-                <div class="h-full bg-slate-400 transition-all duration-700" :style="'width: ' + Math.min((blockMinutes(timeBlock) / 120) * 100, 100) + '%'"></div>
+              <div class="w-full h-1 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+                <div class="h-full bg-slate-500 transition-all duration-700" :style="'width: ' + Math.min((blockMinutes(timeBlock) / 120) * 100, 100) + '%'"></div>
               </div>
             </div>
             
             <div :id="'list-' + timeBlock" :data-time="timeBlock" class="min-h-[100px]">
               <template x-for="habit in sortedHabits.filter(h => h.timeOfDay === timeBlock)" :key="habit.id">
                 
-                <!-- The Habit Card -->
                 <div :data-id="habit.id"
                      @click="if(isEditing) openEditModal(habit); else toggleHabit(habit.id);" 
-                     :class="isEditing ? 'border-indigo-200 bg-indigo-50/50 shadow-none' : 'bg-white border-slate-100 shadow-md hover:shadow-lg'"
+                     :class="isEditing ? 'border-indigo-400 bg-indigo-50 border-dashed' : 'bg-white border-slate-800 shadow-sm hover:shadow-md'"
                      class="habit-card relative overflow-hidden border rounded-3xl p-5 mb-4 transition-all duration-300 transform group"
                      x-bind:class="!isEditing && 'cursor-pointer active:scale-95'">
                   
-                  <!-- THE 2-SECOND FILL ANIMATION -->
                   <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-indigo-600 to-indigo-500 transition-all duration-[2000ms] ease-in-out z-0"
                        :class="habit.checked && !isEditing ? 'h-full' : 'h-0'"></div>
 
-                  <!-- Card Content (z-10 keeps it above the fill) -->
                   <div class="flex justify-between items-start relative z-10">
                     <div>
                       <div class="flex items-center gap-2 mb-1">
                         <span class="text-lg drop-shadow-sm" x-text="categoryIcons[habit.category]"></span>
-                        <!-- Text fades to light blue after a slight delay so it stays visible during fill -->
-                        <p :class="habit.checked && !isEditing ? 'text-indigo-100 delay-500' : 'text-slate-400'" 
+                        <p :class="habit.checked && !isEditing ? 'text-indigo-100 delay-500' : 'text-slate-500'" 
                            class="text-[10px] uppercase tracking-widest font-bold transition-colors duration-1000">
                           <span x-text="habit.category"></span> • <span x-text="habit.duration"></span> min
                         </p>
                       </div>
-                      <!-- Title fades to white -->
-                      <h2 :class="habit.checked && !isEditing ? 'text-white delay-500' : 'text-slate-800'" 
-                          class="text-lg font-medium leading-tight pr-4 transition-colors duration-1000 drop-shadow-sm" 
+                      <h2 :class="habit.checked && !isEditing ? 'text-white delay-500' : 'text-slate-900'" 
+                          class="text-lg font-medium leading-tight pr-4 transition-colors duration-1000" 
                           x-text="habit.title"></h2>
                     </div>
                     
                     <template x-if="!isEditing">
                       <div>
-                        <svg x-show="!habit.checked" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-slate-200 group-hover:text-slate-300 transition-colors mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /></svg>
-                        <!-- Checked Icon fades in -->
+                        <svg x-show="!habit.checked" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-slate-300 group-hover:text-slate-400 transition-colors mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /></svg>
                         <svg x-show="habit.checked" x-cloak x-transition.opacity.duration.1000ms xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white mt-1 drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       </div>
                     </template>
 
-                    <!-- Edit Mode Controls -->
                     <template x-if="isEditing">
                       <div class="flex flex-col gap-3 items-center">
-                        <button @click.stop="deleteHabit(habit.id)" class="text-red-400 hover:text-red-600 p-1 bg-white rounded-full shadow-sm transition-transform hover:scale-110 mt-1">
+                        <button @click.stop="deleteHabit(habit.id)" class="text-red-500 hover:text-white hover:bg-red-500 p-1.5 bg-red-50 border border-red-200 rounded-full shadow-sm transition-all hover:scale-110 mt-1">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                         </button>
-                        <div @click.stop class="drag-handle cursor-grab active:cursor-grabbing text-slate-400 hover:text-indigo-600 p-1 bg-white rounded-full shadow-sm">
+                        <div @click.stop class="drag-handle cursor-grab active:cursor-grabbing text-slate-500 hover:text-indigo-600 p-1 bg-slate-100 border border-slate-200 rounded-full shadow-sm">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16" /></svg>
                         </div>
                       </div>
@@ -133,38 +118,36 @@
     </div>
   </div>
 
-  <!-- Bottom Bar: Weighted Daily Progress -->
-  <div class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-white/50 p-4 px-6 md:px-10 z-20 flex items-center gap-4 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)]">
-    <div class="font-medium text-sm text-slate-600 whitespace-nowrap">Daily Progress</div>
-    <div class="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden relative shadow-inner">
+  <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-800 p-4 px-6 md:px-10 z-20 flex items-center gap-4 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)]">
+    <div class="font-bold text-sm text-slate-800 whitespace-nowrap">Daily Progress</div>
+    <div class="flex-1 h-3 bg-slate-100 border border-slate-300 rounded-full overflow-hidden relative shadow-inner">
       <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-600 to-indigo-500 transition-all duration-1000 ease-out" :style="`width: ${dailyProgressPercentage}%`"></div>
     </div>
-    <div class="font-bold text-indigo-600 w-12 text-right drop-shadow-sm"><span x-text="dailyProgressPercentage"></span>%</div>
+    <div class="font-black text-indigo-600 w-12 text-right"><span x-text="dailyProgressPercentage"></span>%</div>
   </div>
 
-  <!-- Unified Add/Edit Habit Modal -->
-  <div x-show="isAddModalOpen" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-    <div @click.away="isAddModalOpen = false" class="bg-white/90 backdrop-blur-xl rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-white transform transition-all">
-      <h3 class="text-xl font-medium mb-4 text-slate-800 drop-shadow-sm" x-text="editingHabitId ? 'Edit Habit' : 'New Habit'"></h3>
+  <div x-show="isAddModalOpen" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div @click.away="isAddModalOpen = false" class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-slate-800 transform transition-all">
+      <h3 class="text-xl font-bold mb-4 text-slate-900" x-text="editingHabitId ? 'Edit Habit' : 'New Habit'"></h3>
       
       <div class="space-y-4">
         <div>
-          <label class="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-1">Title</label>
-          <input x-model="newHabit.title" type="text" placeholder="e.g., Water the lawn" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner">
+          <label class="block text-xs uppercase tracking-widest font-bold text-slate-600 mb-1">Title</label>
+          <input x-model="newHabit.title" type="text" placeholder="e.g., Water the lawn" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all shadow-inner font-medium text-slate-800">
         </div>
         
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-1">Category</label>
-            <select x-model="newHabit.category" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 appearance-none shadow-inner">
+            <label class="block text-xs uppercase tracking-widest font-bold text-slate-600 mb-1">Category</label>
+            <select x-model="newHabit.category" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none focus:border-indigo-600 appearance-none shadow-inner font-medium text-slate-800">
               <template x-for="cat in Object.keys(categoryIcons)">
                 <option :value="cat" x-text="cat"></option>
               </template>
             </select>
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-1">Time</label>
-            <select x-model="newHabit.timeOfDay" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 appearance-none shadow-inner">
+            <label class="block text-xs uppercase tracking-widest font-bold text-slate-600 mb-1">Time</label>
+            <select x-model="newHabit.timeOfDay" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none focus:border-indigo-600 appearance-none shadow-inner font-medium text-slate-800">
               <option value="morning">Morning</option>
               <option value="afternoon">Afternoon</option>
               <option value="evening">Evening</option>
@@ -173,14 +156,14 @@
         </div>
 
         <div>
-          <label class="block text-xs uppercase tracking-widest font-semibold text-slate-500 mb-1">Duration (Min)</label>
-          <input x-model="newHabit.duration" type="number" step="5" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 shadow-inner">
+          <label class="block text-xs uppercase tracking-widest font-bold text-slate-600 mb-1">Duration (Min)</label>
+          <input x-model="newHabit.duration" type="number" step="5" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none focus:border-indigo-600 shadow-inner font-medium text-slate-800">
         </div>
       </div>
 
       <div class="mt-8 flex gap-3">
-        <button @click="isAddModalOpen = false" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-3 rounded-xl transition-colors shadow-sm active:scale-95 transform">Cancel</button>
-        <button @click="saveHabit()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl shadow-md transition-colors active:scale-95 transform">Save</button>
+        <button @click="isAddModalOpen = false" class="flex-1 bg-white border border-slate-800 text-slate-800 font-bold py-3 rounded-xl transition-colors shadow-sm active:scale-95 transform hover:bg-slate-50">Cancel</button>
+        <button @click="saveHabit()" class="flex-1 bg-indigo-600 border border-indigo-800 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition-colors active:scale-95 transform">Save</button>
       </div>
     </div>
   </div>
@@ -190,7 +173,7 @@
       Alpine.data('habitApp', () => ({
         isEditing: false,
         isAddModalOpen: false,
-        editingHabitId: null, // Tracks if we are editing an existing habit
+        editingHabitId: null, 
         
         lastOpenedDate: Alpine.$persist(new Date().toDateString()),
         habits: Alpine.$persist([
@@ -253,7 +236,6 @@
           return this.habits.sort((a, b) => (a.order || 0) - (b.order || 0));
         },
 
-        // Helper to calculate minutes per column
         blockMinutes(block) {
           return this.habits.filter(h => h.timeOfDay === block).reduce((sum, h) => sum + h.duration, 0);
         },
@@ -274,14 +256,12 @@
           this.habits = this.habits.filter(h => h.id !== id);
         },
 
-        // Open modal empty for a new habit
         openAddModal() {
           this.editingHabitId = null;
           this.newHabit = { title: '', category: 'Health/Sleep', timeOfDay: 'morning', duration: 15 };
           this.isAddModalOpen = true;
         },
 
-        // Open modal pre-filled for editing
         openEditModal(habit) {
           this.editingHabitId = habit.id;
           this.newHabit = { 
@@ -293,12 +273,10 @@
           this.isAddModalOpen = true;
         },
 
-        // Handles both saving new habits and updating existing ones
         saveHabit() {
           if (!this.newHabit.title.trim()) return; 
           
           if (this.editingHabitId) {
-            // Update existing
             const index = this.habits.findIndex(h => h.id === this.editingHabitId);
             if (index > -1) {
               this.habits[index].title = this.newHabit.title;
@@ -307,7 +285,6 @@
               this.habits[index].duration = parseInt(this.newHabit.duration) || 5;
             }
           } else {
-            // Add new
             this.habits.push({
               id: Date.now(), 
               title: this.newHabit.title,
