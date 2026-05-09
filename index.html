@@ -67,7 +67,7 @@
             </div>
             <div class="space-y-2.5">
               <div>
-                <div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-rose-500">MOVE</span><span class="text-slate-700"><span x-text="healthData.calories"></span> / <span x-text="healthData.goalCalories"></span> cal</span></div>
+                <div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-rose-500">CALORIES</span><span class="text-slate-700"><span x-text="healthData.calories"></span> / <span x-text="healthData.goalCalories"></span> cal</span></div>
                 <div class="w-full h-1.5 bg-slate-100 border border-slate-200 rounded-full overflow-hidden"><div class="h-full bg-rose-500 rounded-full" :style="`width: ${Math.min((healthData.calories / healthData.goalCalories) * 100, 100)}%`"></div></div>
               </div>
               <div>
@@ -291,12 +291,11 @@
         blockGoals: Alpine.$persist({ morning: 120, afternoon: 120, evening: 120 }),
         habitTemplates: Alpine.$persist([]),
 
-        // Live Health Data State
-        healthData: { calories: 0, goalCalories: 600, exercise: 0, goalExercise: 30, sleep: 0, goalSleep: 8 },
+        // Live Health Data State (UPDATED GOALS)
+        healthData: { calories: 0, goalCalories: 2500, exercise: 0, goalExercise: 30, sleep: 0, goalSleep: 7.5 },
 
         // Fetch Data from Supabase
         async fetchHealthData() {
-          // Keys are hardcoded securely for your specific project fetch
           const supabaseUrl = 'https://vzkkjpaqteiqyomwalzr.supabase.co'; 
           const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6a2tqcGFxdGVpcXlvbXdhbHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNjIwNjAsImV4cCI6MjA5MzkzODA2MH0.xu0nctOWwIPWQ5E-MzypSLOhhZmsIj-Np5o992tXN_Q'; 
           
@@ -392,7 +391,8 @@
 
         get combinedHabits() {
           const healthTiles = [
-            { id: 'h_move', title: `Close Move Ring`, timeOfDay: 'morning', category: 'Health/Sync', duration: 30, checked: this.healthData.calories >= this.healthData.goalCalories, isLocked: true, order: -3, days: this.daysOfWeek },
+            // Changed Title to "Hit Calorie Goal"
+            { id: 'h_move', title: `Hit Calorie Goal`, timeOfDay: 'morning', category: 'Health/Sync', duration: 30, checked: this.healthData.calories >= this.healthData.goalCalories, isLocked: true, order: -3, days: this.daysOfWeek },
             { id: 'h_ex', title: `Close Exercise Ring`, timeOfDay: 'afternoon', category: 'Health/Sync', duration: 30, checked: this.healthData.exercise >= this.healthData.goalExercise, isLocked: true, order: -2, days: this.daysOfWeek },
             { id: 'h_sleep', title: `Hit Sleep Target`, timeOfDay: 'evening', category: 'Health/Sync', duration: 30, checked: this.healthData.sleep >= this.healthData.goalSleep, isLocked: true, order: -1, days: this.daysOfWeek }
           ];
