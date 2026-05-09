@@ -7,92 +7,161 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-slate-50 font-sans text-slate-900 antialiased flex justify-center selection:bg-indigo-100">
+<body class="bg-slate-50 font-sans text-slate-900 antialiased overflow-hidden selection:bg-indigo-100" x-data="habitApp()">
 
-  <!-- Invisible Audio Player for the "Pop" -->
-  <audio id="popSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+  <!-- Invisible Audio Player for the "Pencil Scratch" -->
+  <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2361/2361-preview.mp3" preload="auto"></audio>
 
-  <div class="w-full max-w-md p-6 min-h-screen">
+  <!-- Main App Layout: Left Content, Right Sidebar, Bottom Bar -->
+  <div class="flex h-screen w-full">
     
-    <header class="mb-8 mt-4">
-      <h1 class="text-3xl font-light tracking-tight text-slate-800">Clean Slate.</h1>
-      <p class="text-slate-500 mt-1">You're at 0% of your daily goal.</p>
-    </header>
-
-    <!-- Habit Card 1: Fitness -->
-    <!-- Notice the added logic in the @click event -->
-    <div x-data="{ checked: false }" 
-         @click="checked = !checked; if(checked) document.getElementById('popSound').play()" 
-         :class="checked ? 'bg-indigo-600 text-white shadow-md' : 'bg-white/80 backdrop-blur-md border-slate-200 shadow-sm'"
-         class="relative overflow-hidden cursor-pointer border rounded-3xl p-6 mb-4 transition-all duration-300 hover:shadow-md transform active:scale-95">
-      
-      <div class="flex justify-between items-center relative z-10">
-        <div>
-          <p :class="checked ? 'text-indigo-200' : 'text-slate-400'" class="text-xs uppercase tracking-widest font-semibold transition-colors">Fitness</p>
-          <h2 class="text-xl font-medium mt-1">400m Interval Training</h2>
-        </div>
+    <!-- Main Center Area -->
+    <div class="flex-1 overflow-y-auto pb-24">
+      <div class="max-w-6xl mx-auto p-6 md:p-10">
         
-        <svg x-show="!checked" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="9" />
-        </svg>
-        <svg x-show="checked" style="display: none;" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
+        <!-- Header -->
+        <header class="flex justify-between items-end mb-10">
+          <div>
+            <h1 class="text-4xl font-light tracking-tight text-slate-800">Clean Slate.</h1>
+            <p class="text-slate-500 mt-2">
+              <span x-text="habits.length"></span> habits today • <span x-text="totalDailyMinutes"></span> total minutes
+            </p>
+          </div>
+          <button @click="isEditing = !isEditing" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors bg-indigo-50 px-4 py-2 rounded-full">
+            <span x-text="isEditing ? 'Done Editing' : 'Edit Habits'"></span>
+          </button>
+        </header>
 
-      <div class="absolute bottom-0 left-0 w-full opacity-10 pointer-events-none">
-        <svg viewBox="0 0 1440 320" class="w-full h-16 object-cover">
-          <path fill="currentColor" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,149.3C672,149,768,203,864,213.3C960,224,1056,192,1152,165.3C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-        </svg>
-      </div>
-    </div>
+        <!-- The 3 Columns: Morning, Afternoon, Evening -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          <!-- Column Template -->
+          <template x-for="timeBlock in ['morning', 'afternoon', 'evening']" :key="timeBlock">
+            <div>
+              <h2 class="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-4 border-b border-slate-200 pb-2" x-text="timeBlock"></h2>
+              
+              <!-- Habit Cards for this Time Block -->
+              <template x-for="habit in habits.filter(h => h.timeOfDay === timeBlock)" :key="habit.id">
+                
+                <div @click="if(!isEditing) toggleHabit(habit.id)" 
+                     :class="habit.checked ? 'bg-indigo-600 text-white shadow-md' : 'bg-white/80 backdrop-blur-md border-slate-200 shadow-sm'"
+                     class="relative overflow-hidden border rounded-3xl p-5 mb-4 transition-all duration-300 transform"
+                     x-bind:class="!isEditing && 'cursor-pointer active:scale-95 hover:shadow-md'">
+                  
+                  <div class="flex justify-between items-start relative z-10">
+                    <div>
+                      <!-- Category & Time -->
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="text-lg" x-text="categoryIcons[habit.category]"></span>
+                        <p :class="habit.checked ? 'text-indigo-200' : 'text-slate-400'" class="text-[10px] uppercase tracking-widest font-bold transition-colors">
+                          <span x-text="habit.category"></span> • <span x-text="habit.duration"></span> min
+                        </p>
+                      </div>
+                      <h2 class="text-lg font-medium leading-tight" x-text="habit.title"></h2>
+                    </div>
+                    
+                    <!-- Track Mode: Checkbox Graphic -->
+                    <template x-if="!isEditing">
+                      <div>
+                        <svg x-show="!habit.checked" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-slate-300 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /></svg>
+                        <svg x-show="habit.checked" style="display: none;" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      </div>
+                    </template>
 
-    <!-- Habit Card 2: Diet -->
-    <div x-data="{ checked: false }" 
-         @click="checked = !checked; if(checked) document.getElementById('popSound').play()" 
-         :class="checked ? 'bg-indigo-600 text-white shadow-md' : 'bg-white/80 backdrop-blur-md border-slate-200 shadow-sm'"
-         class="relative overflow-hidden cursor-pointer border rounded-3xl p-6 mb-8 transition-all duration-300 hover:shadow-md transform active:scale-95">
-      
-      <div class="flex justify-between items-center relative z-10">
-        <div>
-          <p :class="checked ? 'text-indigo-200' : 'text-slate-400'" class="text-xs uppercase tracking-widest font-semibold transition-colors">Diet</p>
-          <h2 class="text-xl font-medium mt-1">Log Daily Macros</h2>
+                    <!-- Edit Mode: Delete Button -->
+                    <template x-if="isEditing">
+                      <button @click="deleteHabit(habit.id)" class="text-red-400 hover:text-red-600 p-1 bg-white rounded-full shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                      </button>
+                    </template>
+                  </div>
+                  
+                  <!-- Background Wave -->
+                  <div class="absolute bottom-0 left-0 w-full opacity-[0.05] pointer-events-none text-black">
+                    <svg viewBox="0 0 1440 320" class="w-full h-12 object-cover"><path fill="currentColor" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,149.3C672,149,768,203,864,213.3C960,224,1056,192,1152,165.3C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+
         </div>
-        
-        <svg x-show="!checked" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="9" />
-        </svg>
-        <svg x-show="checked" style="display: none;" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-
-      <div class="absolute bottom-0 left-0 w-full opacity-10 pointer-events-none">
-        <svg viewBox="0 0 1440 320" class="w-full h-16 object-cover">
-          <path fill="currentColor" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,149.3C672,149,768,203,864,213.3C960,224,1056,192,1152,165.3C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-        </svg>
       </div>
     </div>
 
-    <!-- Benchmark Widget -->
-    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
-      <div class="flex items-center gap-2 mb-6 text-slate-600">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-        </svg>
-        <span class="text-sm font-medium">Peer Comparison (Males, 45)</span>
-      </div>
+    <!-- Right Sidebar: Weekly Progress -->
+    <div class="w-24 bg-white border-l border-slate-200 hidden md:flex flex-col items-center py-10 z-10 shadow-sm relative">
+      <h3 class="text-[10px] uppercase tracking-widest text-slate-400 font-bold rotate-90 whitespace-nowrap mb-16 absolute top-24">Weekly Goal</h3>
       
-      <div class="relative h-2 bg-slate-100 rounded-full mb-8 mt-2">
-        <div class="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-indigo-500 rounded-full border-2 border-white shadow-md" style="left: 85%;"></div>
-        <div class="absolute top-4 left-0 text-[10px] text-slate-400 font-medium tracking-wide uppercase">Average</div>
-        <div class="absolute top-4 right-0 text-[10px] text-slate-400 font-medium tracking-wide uppercase">Elite</div>
+      <!-- Vertical Progress Bar Container -->
+      <div class="flex-1 w-4 bg-slate-100 rounded-full relative overflow-hidden mt-16 mb-4">
+        <!-- The Fill -->
+        <div class="absolute bottom-0 w-full bg-indigo-500 rounded-full transition-all duration-1000 ease-out" style="height: 35%;"></div>
       </div>
-      <p class="text-sm text-slate-500 text-center mt-2">
-        Your consistency is in the <span class="text-indigo-600 font-bold">Top 15%</span>.
-      </p>
+      <p class="text-sm font-bold text-slate-700">35%</p>
     </div>
-
   </div>
+
+  <!-- Bottom Bar: Weighted Daily Progress -->
+  <div class="fixed bottom-0 left-0 w-full md:pr-24 bg-white border-t border-slate-200 p-4 px-6 md:px-10 z-20 flex items-center gap-4">
+    <div class="font-medium text-sm text-slate-600 whitespace-nowrap">Daily Progress</div>
+    <div class="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden relative">
+      <div class="absolute top-0 left-0 h-full bg-indigo-600 transition-all duration-700 ease-out" :style="`width: ${dailyProgressPercentage}%`"></div>
+    </div>
+    <div class="font-bold text-indigo-600 w-12 text-right"><span x-text="dailyProgressPercentage"></span>%</div>
+  </div>
+
+  <!-- The Application Logic -->
+  <script>
+    function habitApp() {
+      return {
+        isEditing: false,
+        // The Icons mapped to your categories
+        categoryIcons: {
+          'Faith': '🕊️', 'Family': '👨‍👩‍👧', 'Friends/Others': '🤝', 
+          'Health/Sleep': '🏃', 'Work': '💼', 'Home': '🏠', 'Leisure': '📖'
+        },
+        // Your Data Model (This is where you define the habits)
+        habits: [
+          { id: 1, title: 'Morning Reading', timeOfDay: 'morning', category: 'Faith', duration: 15, checked: false },
+          { id: 2, title: '400m Interval Run', timeOfDay: 'morning', category: 'Health/Sleep', duration: 45, checked: false },
+          { id: 3, title: 'Review School Data', timeOfDay: 'afternoon', category: 'Work', duration: 60, checked: false },
+          { id: 4, title: 'Yard Landscaping', timeOfDay: 'afternoon', category: 'Home', duration: 30, checked: false },
+          { id: 5, title: 'Dinner with Family', timeOfDay: 'evening', category: 'Family', duration: 45, checked: false },
+          { id: 6, title: 'Watch Cult Classic', timeOfDay: 'evening', category: 'Leisure', duration: 90, checked: false }
+        ],
+
+        // Toggle a habit and play sound
+        toggleHabit(id) {
+          const habit = this.habits.find(h => h.id === id);
+          if (habit) {
+            habit.checked = !habit.checked;
+            if (habit.checked) {
+              const audio = document.getElementById('clickSound');
+              audio.currentTime = 0; // Reset sound to start
+              audio.play();
+            }
+          }
+        },
+
+        // Delete a habit
+        deleteHabit(id) {
+          this.habits = this.habits.filter(h => h.id !== id);
+        },
+
+        // --- Computed Properties for Progress Math ---
+        get totalDailyMinutes() {
+          return this.habits.reduce((total, habit) => total + habit.duration, 0);
+        },
+        get completedDailyMinutes() {
+          return this.habits.filter(h => h.checked).reduce((total, habit) => total + habit.duration, 0);
+        },
+        get dailyProgressPercentage() {
+          if (this.totalDailyMinutes === 0) return 0;
+          return Math.round((this.completedDailyMinutes / this.totalDailyMinutes) * 100);
+        }
+      }
+    }
+  </script>
 </body>
 </html>
