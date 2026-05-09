@@ -4,25 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clean Slate</title>
-  <!-- Tailwind CSS for styling -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Alpine.js for interactive clicks -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-slate-50 font-sans text-slate-900 antialiased flex justify-center selection:bg-indigo-100">
 
+  <!-- Invisible Audio Player for the "Pop" -->
+  <audio id="popSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+
   <div class="w-full max-w-md p-6 min-h-screen">
     
-    <!-- Header -->
     <header class="mb-8 mt-4">
       <h1 class="text-3xl font-light tracking-tight text-slate-800">Clean Slate.</h1>
       <p class="text-slate-500 mt-1">You're at 0% of your daily goal.</p>
     </header>
 
     <!-- Habit Card 1: Fitness -->
-    <!-- The x-data="{ checked: false }" handles the logic. The @click toggles it! -->
+    <!-- Notice the added logic in the @click event -->
     <div x-data="{ checked: false }" 
-         @click="checked = !checked" 
+         @click="checked = !checked; if(checked) document.getElementById('popSound').play()" 
          :class="checked ? 'bg-indigo-600 text-white shadow-md' : 'bg-white/80 backdrop-blur-md border-slate-200 shadow-sm'"
          class="relative overflow-hidden cursor-pointer border rounded-3xl p-6 mb-4 transition-all duration-300 hover:shadow-md transform active:scale-95">
       
@@ -32,7 +32,6 @@
           <h2 class="text-xl font-medium mt-1">400m Interval Training</h2>
         </div>
         
-        <!-- Icon: Changes based on checked state -->
         <svg x-show="!checked" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="9" />
         </svg>
@@ -41,7 +40,6 @@
         </svg>
       </div>
 
-      <!-- Background Wave Graphic -->
       <div class="absolute bottom-0 left-0 w-full opacity-10 pointer-events-none">
         <svg viewBox="0 0 1440 320" class="w-full h-16 object-cover">
           <path fill="currentColor" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,149.3C672,149,768,203,864,213.3C960,224,1056,192,1152,165.3C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
@@ -51,7 +49,7 @@
 
     <!-- Habit Card 2: Diet -->
     <div x-data="{ checked: false }" 
-         @click="checked = !checked" 
+         @click="checked = !checked; if(checked) document.getElementById('popSound').play()" 
          :class="checked ? 'bg-indigo-600 text-white shadow-md' : 'bg-white/80 backdrop-blur-md border-slate-200 shadow-sm'"
          class="relative overflow-hidden cursor-pointer border rounded-3xl p-6 mb-8 transition-all duration-300 hover:shadow-md transform active:scale-95">
       
