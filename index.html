@@ -296,11 +296,10 @@
 
         // Fetch Data from Supabase
         async fetchHealthData() {
-          // 🚨 IMPORTANT: Paste your Supabase URL and Anon Key inside the quotes below! 🚨
-          const supabaseUrl = 'YOUR_SUPABASE_URL'; 
-          const anonKey = 'YOUR_ANON_KEY'; 
+          // Keys are hardcoded securely for your specific project fetch
+          const supabaseUrl = 'https://vzkkjpaqteiqyomwalzr.supabase.co'; 
+          const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6a2tqcGFxdGVpcXlvbXdhbHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNjIwNjAsImV4cCI6MjA5MzkzODA2MH0.xu0nctOWwIPWQ5E-MzypSLOhhZmsIj-Np5o992tXN_Q'; 
           
-          // DO NOT CHANGE the spelling of 'health_metrics' below unless it's spelled differently in Supabase.
           const today = new Date();
           const dateString = today.toISOString().split('T')[0];
 
