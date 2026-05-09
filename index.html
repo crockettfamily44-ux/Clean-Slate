@@ -16,6 +16,8 @@
 </head>
 <body class="bg-gradient-to-br from-emerald-50 via-white to-slate-50 font-sans text-slate-900 antialiased overflow-x-hidden selection:bg-emerald-100 min-h-screen" x-data="habitApp">
 
+  <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2995/2995-preview.mp3" preload="auto"></audio>
+
   <div class="w-full pb-40">
     <div class="max-w-6xl mx-auto p-6 md:p-10">
       
@@ -283,7 +285,6 @@
         blockGoals: Alpine.$persist({ morning: 120, afternoon: 120, evening: 120 }),
         habitTemplates: Alpine.$persist([]),
 
-        // NEW: Database Memory for Watch Tile Positions
         healthPrefs: Alpine.$persist({
           h_move: { timeOfDay: 'morning', order: -3 },
           h_ex: { timeOfDay: 'afternoon', order: -2 },
@@ -316,23 +317,6 @@
           }
         },
 
-        // NEW: Zero-latency Native Browser Sound Generator
-        playClickSound() {
-          if (!window.audioCtx) window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          if (window.audioCtx.state === 'suspended') window.audioCtx.resume();
-          const osc = window.audioCtx.createOscillator();
-          const gain = window.audioCtx.createGain();
-          osc.connect(gain);
-          gain.connect(window.audioCtx.destination);
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(800, window.audioCtx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(300, window.audioCtx.currentTime + 0.1);
-          gain.gain.setValueAtTime(0.2, window.audioCtx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, window.audioCtx.currentTime + 0.1);
-          osc.start(window.audioCtx.currentTime);
-          osc.stop(window.audioCtx.currentTime + 0.1);
-        },
-
         lastOpenedDate: Alpine.$persist(new Date().toDateString()),
         habits: Alpine.$persist([
           { id: 1, title: 'Morning Reading', timeOfDay: 'morning', category: 'Faith', duration: 15, checked: false, order: 0, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
@@ -363,7 +347,7 @@
                 group: 'shared',
                 handle: '.drag-handle',
                 animation: 150,
-                filter: 'button', // Unlocked dragging!
+                filter: 'button',
                 onEnd: (evt) => {
                   const itemEl = evt.item;
                   const habitId = itemEl.dataset.id; 
@@ -378,7 +362,6 @@
 
                   if (evt.from !== evt.to) { evt.from.appendChild(itemEl); }
                   
-                  // NEW: Updates memory depending on if it's a watch tile or manual habit
                   if (habitId.startsWith('h_')) {
                     this.healthPrefs[habitId].timeOfDay = newTimeOfDay;
                   } else {
@@ -423,15 +406,23 @@
           return this.currentDayHabits.filter(h => h.timeOfDay === block).reduce((sum, h) => sum + h.duration, 0);
         },
 
+        // UPDATED: Staple sound is back and cloned for double volume!
         toggleHabit(id) {
-          // Block manual clicking on the watch tiles!
           if(id.toString().startsWith('h_')) return;
 
           const habit = this.habits.find(h => h.id === id);
           if (habit) {
             habit.checked = !habit.checked;
             if (habit.checked) {
-              this.playClickSound(); // Fires the new zero-latency native audio generator
+              const audio = document.getElementById('clickSound');
+              audio.volume = 1.0;
+              audio.currentTime = 0;
+              audio.play().catch(e => console.log("Audio play failed"));
+              
+              // Trick to double the volume: Play a cloned version simultaneously
+              const audioClone = audio.cloneNode();
+              audioClone.volume = 1.0;
+              audioClone.play().catch(e => {});
             }
           }
         },
