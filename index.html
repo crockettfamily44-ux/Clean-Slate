@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clean Slate</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine Persist Plugin -->
   <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
+  <!-- Alpine Core -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <!-- This guarantees hidden elements stay hidden until clicked -->
   <style> [x-cloak] { display: none !important; } </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-900 antialiased overflow-x-hidden selection:bg-indigo-100" x-data="habitApp()">
+<!-- Notice x-data is now just the name of the component -->
+<body class="bg-slate-50 font-sans text-slate-900 antialiased overflow-x-hidden selection:bg-indigo-100" x-data="habitApp">
 
   <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2569/2569-preview.mp3" preload="auto"></audio>
 
@@ -49,7 +51,6 @@
               <span class="text-xs font-bold text-indigo-600">35%</span>
             </div>
             <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden relative">
-              <!-- Note: Hardcoded to 35% until we build the historical tracking -->
               <div class="absolute top-0 left-0 h-full bg-indigo-500 rounded-full transition-all duration-1000" style="width: 35%;"></div>
             </div>
           </div>
@@ -90,7 +91,7 @@
                     </div>
                   </template>
 
-                  <!-- Delete Button (Only visible when editing) -->
+                  <!-- Delete Button -->
                   <template x-if="isEditing">
                     <button @click.stop="deleteHabit(habit.id)" class="text-red-500 hover:text-red-700 hover:bg-red-100 p-2 bg-white rounded-full shadow-sm transition-colors mt-1">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
@@ -161,15 +162,23 @@
     </div>
   </div>
 
-  <!-- The Application Logic -->
   <script>
-    function habitApp() {
-      return {
+    // This is the correct, safe way to load Alpine and use the Persist plugin
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('habitApp', () => ({
         isEditing: false,
         isAddModalOpen: false,
         
-        // Persist the last opened date to handle the midnight reset
-        lastOpenedDate: this.$persist(new Date().toDateString()),
+        // This safely registers the variables into your browser's local storage
+        lastOpenedDate: Alpine.$persist(new Date().toDateString()),
+        habits: Alpine.$persist([
+          { id: 1, title: 'Morning Reading', timeOfDay: 'morning', category: 'Faith', duration: 15, checked: false },
+          { id: 2, title: '400m Interval Run', timeOfDay: 'morning', category: 'Health/Sleep', duration: 45, checked: false },
+          { id: 3, title: 'Review School Data', timeOfDay: 'afternoon', category: 'Work', duration: 60, checked: false },
+          { id: 4, title: 'Yard Landscaping', timeOfDay: 'afternoon', category: 'Home', duration: 30, checked: false },
+          { id: 5, title: 'Dinner with Family', timeOfDay: 'evening', category: 'Family', duration: 45, checked: false },
+          { id: 6, title: 'Watch Cult Classic', timeOfDay: 'evening', category: 'Leisure', duration: 90, checked: false }
+        ]),
         
         categoryIcons: {
           'Faith': '🕊️', 'Family': '👨‍👩‍👧', 'Friends/Others': '🤝', 
@@ -183,19 +192,8 @@
           duration: 15
         },
 
-        habits: this.$persist([
-          { id: 1, title: 'Morning Reading', timeOfDay: 'morning', category: 'Faith', duration: 15, checked: false },
-          { id: 2, title: '400m Interval Run', timeOfDay: 'morning', category: 'Health/Sleep', duration: 45, checked: false },
-          { id: 3, title: 'Review School Data', timeOfDay: 'afternoon', category: 'Work', duration: 60, checked: false },
-          { id: 4, title: 'Yard Landscaping', timeOfDay: 'afternoon', category: 'Home', duration: 30, checked: false },
-          { id: 5, title: 'Dinner with Family', timeOfDay: 'evening', category: 'Family', duration: 45, checked: false },
-          { id: 6, title: 'Watch Cult Classic', timeOfDay: 'evening', category: 'Leisure', duration: 90, checked: false }
-        ]),
-
-        // Initialize is called automatically by Alpine when the app loads
         init() {
           const today = new Date().toDateString();
-          // The Midnight Reset Logic
           if (this.lastOpenedDate !== today) {
             this.habits.forEach(habit => habit.checked = false);
             this.lastOpenedDate = today;
@@ -245,8 +243,8 @@
           if (this.totalDailyMinutes === 0) return 0;
           return Math.round((this.completedDailyMinutes / this.totalDailyMinutes) * 100);
         }
-      }
-    }
+      }))
+    })
   </script>
 </body>
 </html>
