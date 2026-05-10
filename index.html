@@ -35,19 +35,41 @@
             <h1 class="text-4xl font-light tracking-tight text-slate-900 drop-shadow-sm">Clean Slate.</h1>
             <p class="text-slate-600 mt-1 font-medium text-sm">
               <span x-text="currentDayString" class="font-bold text-emerald-700"></span> • 
-              <span x-text="currentDayHabits.length"></span> habits today • <span x-text="totalDailyMinutes"></span> min
+              <span x-text="currentDayHabits.length"></span> habits today
             </p>
+            <div class="flex gap-2 mt-4">
+              <button @click="openAddModal()" class="text-[10px] font-black uppercase tracking-widest text-white bg-emerald-600 px-4 py-2 rounded-full shadow-sm hover:bg-emerald-700 active:scale-95 transition-all">+ Add</button>
+              <button @click="isEditing = !isEditing" :class="isEditing ? 'bg-emerald-100 text-emerald-800 border-emerald-800 shadow-inner' : 'bg-white text-slate-700 border-slate-800 shadow-sm'" class="text-[10px] font-black uppercase tracking-widest border transition-all px-4 py-2 rounded-full active:scale-95">
+                <span x-text="isEditing ? 'Done' : 'Edit'"></span>
+              </button>
+              <button @click="isStatsOpen = true" class="text-[10px] font-black uppercase tracking-widest bg-slate-800 text-white border border-slate-900 px-4 py-2 rounded-full flex items-center gap-2 active:scale-95 transition-all">
+                Stats
+              </button>
+            </div>
           </div>
         </div>
-        
-        <div class="flex flex-wrap gap-2">
-          <button @click="openAddModal()" class="text-sm font-medium text-white bg-emerald-600 border border-emerald-800 hover:bg-emerald-700 px-5 py-2 rounded-full shadow-sm active:scale-95 transition-all">+ Add Habit</button>
-          <button @click="isEditing = !isEditing" :class="isEditing ? 'bg-emerald-100 text-emerald-800 border-emerald-800 shadow-inner' : 'bg-white text-slate-700 border-slate-800 shadow-sm'" class="text-sm font-medium border transition-all px-5 py-2 rounded-full w-24 active:scale-95">
-            <span x-text="isEditing ? 'Done' : 'Edit'"></span>
-          </button>
-          <button @click="isStatsOpen = true" class="text-sm font-medium bg-slate-800 text-white border border-slate-900 px-5 py-2 rounded-full flex items-center gap-2 active:scale-95 transition-all">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> Stats
-          </button>
+
+        <div class="w-full md:w-64 bg-white p-4 rounded-2xl shadow-sm border border-slate-800 flex flex-col justify-between">
+          <div class="flex justify-between items-center mb-3">
+            <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Sync (Live)
+            </span>
+          </div>
+          <div class="space-y-2.5">
+            <div>
+              <div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-rose-500">CALORIES</span><span class="text-slate-700"><span x-text="healthData.calories"></span> / <span x-text="healthData.goalCalories"></span></span></div>
+              <div class="w-full h-1.5 bg-slate-100 border border-slate-200 rounded-full overflow-hidden"><div class="h-full bg-rose-500 rounded-full" :style="`width: ${Math.min((healthData.calories / healthData.goalCalories) * 100, 100)}%`"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-emerald-500">EXERCISE</span><span class="text-slate-700"><span x-text="healthData.exercise"></span> / <span x-text="healthData.goalExercise"></span> min</span></div>
+              <div class="w-full h-1.5 bg-slate-100 border border-slate-200 rounded-full overflow-hidden"><div class="h-full bg-emerald-500 rounded-full" :style="`width: ${Math.min((healthData.exercise / healthData.goalExercise) * 100, 100)}%`"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-cyan-500">SLEEP</span><span class="text-slate-700"><span x-text="healthData.sleep"></span> / <span x-text="healthData.goalSleep"></span> hr</span></div>
+              <div class="w-full h-1.5 bg-slate-100 border border-slate-200 rounded-full overflow-hidden"><div class="h-full bg-cyan-500 rounded-full" :style="`width: ${Math.min((healthData.sleep / healthData.goalSleep) * 100, 100)}%`"></div></div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -64,11 +86,11 @@
                       <span class="text-[10px] text-slate-400 font-medium" x-text="'(' + timeWindows[timeBlock] + ')'"></span>
                     </template>
                     <template x-if="isEditing">
-                      <input x-model="timeWindows[timeBlock]" class="text-[10px] border border-emerald-300 bg-emerald-50 rounded px-1 w-full outline-none text-emerald-800">
+                      <input x-model="timeWindows[timeBlock]" class="text-[10px] border border-emerald-300 bg-emerald-50 rounded px-1 w-full outline-none text-emerald-800 font-bold">
                     </template>
                   </div>
                 </h2>
-                <div class="w-full h-1 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+                <div class="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
                   <div class="h-full bg-emerald-500 transition-all duration-700" :style="'width: ' + blockProgress(timeBlock) + '%'"></div>
                 </div>
               </div>
@@ -84,14 +106,12 @@
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
                       </div>
                       <div class="flex-1 flex justify-between items-center">
-                        <div>
-                          <div class="flex items-center gap-2">
-                            <span class="text-sm" x-text="habit.isWatch ? '⌚' : categoryIcons[habit.category]"></span>
-                            <h2 class="text-sm font-bold leading-tight" x-text="habit.title"></h2>
-                          </div>
+                        <div class="flex items-center gap-2">
+                          <span class="text-sm" x-text="habit.isWatch ? '⌚' : categoryIcons[habit.category]"></span>
+                          <span class="text-sm font-bold" x-text="habit.title"></span>
                         </div>
                         <template x-if="isEditing && !habit.isWatch">
-                           <button @click.stop="deleteHabit(habit.id)" class="text-red-400 hover:text-red-600 transition-colors text-lg font-black">&times;</button>
+                           <button @click.stop="deleteHabit(habit.id)" class="text-red-400 hover:text-red-600 font-black">&times;</button>
                         </template>
                       </div>
                     </div>
@@ -119,7 +139,6 @@
                 </div>
               </template>
             </div>
-
           </div>
         </template>
       </div>
@@ -143,13 +162,13 @@
     </div>
   </div>
 
-  <div x-show="isAddModalOpen" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+  <div x-show="isAddModalOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
     <div @click.away="isAddModalOpen = false" class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-slate-800 transform transition-all my-8">
-      <h3 class="text-xl font-bold mb-4">Add Item</h3>
+      <h3 class="text-xl font-bold mb-4">New Habit</h3>
       
       <template x-if="habitTemplates.length > 0">
         <div class="mb-6 pb-4 border-b border-slate-200 overflow-x-auto whitespace-nowrap custom-scroll">
-          <label class="block text-[10px] uppercase tracking-widest font-black text-slate-400 mb-2">Library</label>
+          <label class="block text-[10px] uppercase tracking-widest font-black text-slate-400 mb-2">Saved Library</label>
           <div class="flex gap-2 pb-2">
             <template x-for="temp in habitTemplates" :key="temp.title">
               <div class="flex items-center bg-emerald-50 border border-emerald-200 rounded-lg overflow-hidden text-[10px] font-bold text-emerald-800 shadow-sm">
@@ -162,18 +181,18 @@
       </template>
 
       <div class="space-y-4">
-        <input x-model="newHabit.title" type="text" placeholder="Drink 8 glasses of water..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none focus:border-emerald-600 font-medium">
+        <input x-model="newHabit.title" type="text" placeholder="Title..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none focus:border-emerald-600 font-medium">
         <div class="grid grid-cols-2 gap-3">
-          <select x-model="newHabit.category" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none">
+          <select x-model="newHabit.category" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm">
             <template x-for="cat in Object.keys(categoryIcons)"><option :value="cat" x-text="cat"></option></template>
           </select>
-          <select x-model="newHabit.timeOfDay" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none">
+          <select x-model="newHabit.timeOfDay" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm">
             <option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="evening">Evening</option>
           </select>
         </div>
         <div class="flex items-center gap-2 px-3 py-3 bg-slate-50 rounded-xl border border-slate-200">
           <input type="checkbox" x-model="newHabit.isWeekly" id="isWeekly" class="w-4 h-4 rounded text-emerald-600">
-          <label for="isWeekly" class="text-xs font-black text-slate-500 uppercase tracking-tighter">Weekly Task (Skip Daily Bar)</label>
+          <label for="isWeekly" class="text-xs font-black text-slate-500 uppercase tracking-tighter">Weekly Habit (Skip Daily Bar)</label>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Duration (Min)</label>
@@ -189,7 +208,6 @@
 
   <div x-show="isStatsOpen" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4">
     <div @click.away="isStatsOpen = false" class="bg-white rounded-[2rem] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-800 shadow-2xl">
-      
       <header class="p-8 border-b flex justify-between items-center bg-slate-50">
         <div>
           <h2 class="text-3xl font-black text-slate-800 tracking-tighter italic">COMMAND CENTER</h2>
@@ -200,13 +218,11 @@
             </template>
           </div>
         </div>
-        <button @click="isStatsOpen = false" class="bg-white border-2 border-slate-200 p-3 rounded-full hover:bg-rose-50 hover:border-rose-200 transition-colors">&times;</button>
+        <button @click="isStatsOpen = false" class="bg-white border-2 border-slate-200 p-3 rounded-full hover:bg-rose-50 transition-colors">&times;</button>
       </header>
       
       <div class="flex-1 overflow-y-auto p-8 custom-scroll grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         <div class="lg:col-span-2 space-y-8">
-          
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
              <div class="bg-emerald-50 p-6 rounded-[2rem] border border-emerald-100">
                 <p class="text-[10px] font-black text-emerald-700 uppercase mb-4 tracking-widest">🏆 Top 3 MVPs</p>
@@ -221,7 +237,6 @@
                 </div>
              </div>
           </div>
-
           <div class="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-sm">
              <p class="text-[10px] font-black text-slate-400 uppercase mb-6 tracking-widest">Time Allocation (Current Session)</p>
              <div class="space-y-6">
@@ -237,7 +252,7 @@
 
         <div class="space-y-8">
            <div class="bg-slate-900 p-6 rounded-[2rem] text-white shadow-xl">
-              <p class="text-[10px] font-black text-indigo-400 uppercase mb-6 tracking-[0.2em]">Health Insights</p>
+              <p class="text-[10px] font-black text-indigo-400 uppercase mb-6 tracking-[0.2em]">Weekly Health Insights</p>
               <div class="space-y-6">
                  <div>
                    <div class="flex justify-between text-[11px] font-bold mb-2"><span>EXERCISE</span><span class="text-emerald-400" x-text="healthData.exercise + 'm'"></span></div>
@@ -252,21 +267,18 @@
                    <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" :style="`width: ${(healthData.sleep/healthData.goalSleep)*100}%`"></div></div>
                  </div>
               </div>
-              <p class="text-[9px] text-slate-500 mt-8 leading-relaxed">Aggregated from your private Supabase connection. Reflects current <span x-text="statRange"></span> goals.</p>
            </div>
-
            <div class="bg-white border-2 border-slate-100 p-6 rounded-[2rem]">
               <p class="text-[10px] font-black text-slate-400 uppercase mb-6 tracking-widest">Peak Efficiency Periods</p>
               <template x-for="block in ['morning', 'afternoon', 'evening']">
                  <div class="flex items-center gap-4 mb-5">
-                   <div class="w-10 text-[9px] font-black text-slate-400 uppercase tracking-tighter" x-text="block"></div>
+                   <div class="w-10 text-[9px] font-black text-slate-400 uppercase" x-text="block"></div>
                    <div class="flex-1 h-2.5 bg-slate-50 rounded-full border border-slate-200 overflow-hidden"><div class="h-full bg-indigo-500 transition-all duration-1000" :style="`width: ${blockEfficiency(block)}%`"></div></div>
                    <div class="text-[10px] font-black text-slate-800" x-text="blockEfficiency(block) + '%'"></div>
                  </div>
               </template>
            </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -274,40 +286,20 @@
   <script>
     document.addEventListener('alpine:init', () => {
       Alpine.data('habitApp', () => ({
-        isEditing: false,
-        isAddModalOpen: false,
-        isStatsOpen: false,
-        statRange: 'Week',
-        
+        isEditing: false, isAddModalOpen: false, isStatsOpen: false, statRange: 'Week',
         daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         currentDayString: new Date().toLocaleDateString('en-US', { weekday: 'short' }),
         profileImage: Alpine.$persist(null),
-        
-        // Editable Time Frames
-        timeWindows: Alpine.$persist({
-          morning: '6:00 A.M. - 12:00 P.M.',
-          afternoon: '12:00 P.M. - 6:00 P.M.',
-          evening: '6:00 P.M. - 12:00 A.M.'
-        }),
-
-        // Drag Position Memory
-        healthPrefs: Alpine.$persist({
-          h_m: { timeOfDay: 'morning', order: -3 },
-          h_e: { timeOfDay: 'afternoon', order: -2 },
-          h_s: { timeOfDay: 'evening', order: -1 }
-        }),
-
+        timeWindows: Alpine.$persist({ morning: '6:00 A.M. - 12:00 P.M.', afternoon: '12:00 P.M. - 6:00 P.M.', evening: '6:00 P.M. - 12:00 A.M.' }),
+        healthPrefs: Alpine.$persist({ h_m: { timeOfDay: 'morning', order: -3 }, h_e: { timeOfDay: 'afternoon', order: -2 }, h_s: { timeOfDay: 'evening', order: -1 } }),
         healthData: { calories: 0, goalCalories: 2500, exercise: 0, goalExercise: 30, sleep: 0, goalSleep: 7.5 },
         habitTemplates: Alpine.$persist([]),
-
         habits: Alpine.$persist([
           { id: 1, title: 'Morning Reading', timeOfDay: 'morning', category: 'Faith', duration: 15, checked: false, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], isWeekly: false, order: 0 },
           { id: 2, title: 'Review School Data', timeOfDay: 'afternoon', category: 'Work', duration: 60, checked: false, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], isWeekly: false, order: 1 }
         ]),
-        
         categoryIcons: { 'Faith': '🕊️', 'Family': '👨‍👩‍👧', 'Health/Sleep': '🏃', 'Work': '💼', 'Home': '🏠', 'Leisure': '📖' },
         newHabit: { title: '', category: 'Health/Sleep', timeOfDay: 'morning', duration: 15, isWeekly: false },
-
         lastOpenedDate: Alpine.$persist(new Date().toDateString()),
 
         init() {
@@ -335,7 +327,7 @@
               this.healthData.exercise = d.exercise || 0;
               this.healthData.sleep = d.sleep ? Math.round(d.sleep * 10) / 10 : 0;
             }
-          } catch(e) { console.log("Fetch failed"); }
+          } catch(e) {}
         },
 
         get currentDayHabits() {
@@ -352,16 +344,11 @@
           return items.length ? Math.round((items.filter(i => i.checked).length / items.length) * 100) : 0;
         },
 
-        blockMinutes(block) { return this.currentDayHabits.filter(h => h.timeOfDay === block).reduce((s, h) => s + h.duration, 0); },
-
         toggleHabit(id) {
           const h = this.habits.find(x => x.id === id);
           if (h) {
             h.checked = !h.checked;
-            if (h.checked) {
-              const s = document.getElementById('clickSound').cloneNode();
-              s.play();
-            }
+            if (h.checked) { document.getElementById('clickSound').cloneNode().play(); }
           }
         },
 
@@ -385,20 +372,17 @@
           reader.readAsDataURL(e.target.files[0]);
         },
 
-        // Progress Calculations
         get totalDailyMinutes() { return this.currentDayHabits.reduce((s, h) => s + h.duration, 0); },
         get dailyProgressPercentage() {
           const checked = this.currentDayHabits.filter(h => h.checked).reduce((s, h) => s + h.duration, 0);
           return this.totalDailyMinutes ? Math.round((checked / this.totalDailyMinutes) * 100) : 0;
         },
         get weeklyProgressPercentage() {
-          const totalDailyPool = this.habits.filter(h => !h.isWeekly).length * 7;
-          const weeklyTasks = this.habits.filter(h => h.isWeekly).length;
           const totalChecks = this.habits.filter(h => h.checked).length;
-          return (totalDailyPool + weeklyTasks) ? Math.round((totalChecks / (totalDailyPool + weeklyTasks)) * 100) : 0;
+          const totalTasks = this.habits.length;
+          return totalTasks ? Math.round((totalChecks / totalTasks) * 100) : 0;
         },
 
-        // Analytics Logic
         get topHabits() { return this.habits.filter(h => h.checked).slice(0, 3).map(h => ({title: h.title, score: 1})); },
         get bottomHabits() { return this.habits.filter(h => !h.checked).slice(0, 3); },
         get categoryBreakdown() {
@@ -422,13 +406,11 @@
                   const newTime = evt.to.dataset.time;
                   const newOrders = {};
                   Array.from(evt.to.children).forEach((el, i) => { newOrders[el.dataset.id] = i; });
-                  
                   if (id.startsWith('h_')) { this.healthPrefs[id].timeOfDay = newTime; } 
                   else { 
                     const h = this.habits.find(x => x.id == id);
                     if (h) h.timeOfDay = newTime;
                   }
-
                   this.habits.forEach(h => { if (newOrders[h.id] !== undefined) h.order = newOrders[h.id]; });
                   Object.keys(this.healthPrefs).forEach(k => { if (newOrders[k] !== undefined) this.healthPrefs[k].order = newOrders[k]; });
                   this.habits = [...this.habits];
