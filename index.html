@@ -39,7 +39,7 @@
           </div>
           
           <div class="flex flex-wrap gap-2 mt-6">
-            <button @click="openAddModal()" class="text-sm font-medium text-white bg-emerald-600 border border-emerald-800 hover:bg-emerald-700 transition-colors px-5 py-2 rounded-full shadow-sm active:scale-95">+ Add Habit</button>
+            <button @click="openAddModal()" class="text-sm font-medium text-white bg-emerald-600 border border-emerald-800 hover:bg-emerald-700 transition-colors px-5 py-2 rounded-full shadow-sm active:scale-95 tracking-tight">+ Add Habit</button>
             <button @click="isEditing = !isEditing" :class="isEditing ? 'bg-emerald-100 text-emerald-800 border-emerald-800 shadow-inner' : 'bg-white text-slate-700 border-slate-800 shadow-sm'" class="text-sm font-medium border transition-all px-5 py-2 rounded-full w-24 active:scale-95">
               <span x-text="isEditing ? 'Done' : 'Edit'"></span>
             </button>
@@ -52,7 +52,7 @@
         <div class="w-full md:w-64 bg-white p-4 rounded-2xl shadow-sm border border-slate-800 flex flex-col justify-between">
           <div class="flex justify-between items-center mb-3">
             <span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold flex items-center gap-1">
-              <svg class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Sync (Live)
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Sync (Live)
             </span>
           </div>
           <div class="space-y-2.5">
@@ -100,14 +100,14 @@
                        :class="habit.checked && (!isEditing || habit.isWatch) ? 'h-full' : 'h-0'"></div>
 
                   <div class="flex items-center gap-3 relative z-10 pointer-events-none">
-                    <div @click.stop class="drag-handle pointer-events-auto text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing p-1 -ml-2">
+                    <div @click.stop class="drag-handle pointer-events-auto text-slate-300 hover:text-slate-500 cursor-grab p-1 -ml-2">
                       <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
                     </div>
 
                     <div class="flex-1 flex justify-between items-start">
                       <div class="pr-6">
                         <div class="flex items-center gap-2 mb-1">
-                          <span class="text-lg drop-shadow-sm" x-text="habit.isWatch ? '⌚' : categoryIcons[habit.category]"></span>
+                          <span class="text-lg" x-text="habit.isWatch ? '⌚' : categoryIcons[habit.category]"></span>
                           <p :class="habit.checked && (!isEditing || habit.isWatch) ? 'text-emerald-900' : 'text-slate-500'" 
                              class="text-[10px] uppercase tracking-widest font-bold transition-colors duration-1000">
                             <span x-text="habit.category"></span>
@@ -118,22 +118,22 @@
                             x-text="habit.title"></h2>
                       </div>
                       
-                      <div class="absolute top-4 right-5 text-[9px] font-black text-slate-300 uppercase tracking-tighter" x-text="habit.duration + ' min'"></div>
+                      <div class="absolute bottom-4 right-5 text-[9px] font-black text-slate-400 uppercase tracking-tighter" 
+                           :class="habit.checked ? 'text-emerald-900 opacity-60' : 'text-slate-300'"
+                           x-text="habit.duration + ' min'"></div>
 
-                      <div class="flex flex-col items-center justify-center min-h-[40px] pointer-events-auto">
+                      <div class="flex flex-col items-center justify-center min-h-[40px] pointer-events-auto shrink-0">
                         <template x-if="!isEditing || habit.isWatch">
-                          <div class="relative w-8 h-8 flex items-center justify-center">
-                            <svg x-show="!habit.checked" x-cloak x-transition.opacity.duration.300ms class="absolute w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /></svg>
-                            <svg x-show="habit.checked" x-cloak x-transition.opacity.duration.300ms class="absolute w-8 h-8 text-emerald-800 drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          <div class="relative w-8 h-8">
+                            <svg x-show="!habit.checked" x-cloak x-transition.opacity.duration.300ms class="absolute inset-0 w-8 h-8 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /></svg>
+                            <svg x-show="habit.checked" x-cloak x-transition.opacity.duration.300ms class="absolute inset-0 w-8 h-8 text-emerald-800 drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                           </div>
                         </template>
 
                         <template x-if="isEditing && !habit.isWatch">
                           <div class="flex flex-col gap-2 -mt-1">
-                            <button @click.stop="openEditModal(habit)" class="text-slate-400 hover:text-slate-800 transition-colors">
-                              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                            </button>
-                            <button @click.stop="deleteHabit(habit.id)" class="text-red-300 hover:text-red-600 transition-colors text-lg font-black">&times;</button>
+                            <button @click.stop="openEditModal(habit)" class="text-slate-400 hover:text-slate-800"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+                            <button @click.stop="deleteHabit(habit.id)" class="text-red-300 hover:text-red-600 text-lg font-black">&times;</button>
                           </div>
                         </template>
                       </div>
@@ -152,14 +152,14 @@
     <div class="p-4 px-6 md:px-10 flex items-center gap-4 bg-white border-b border-slate-100">
       <div class="font-black text-[10px] uppercase tracking-widest text-slate-800 w-24">Daily Goals</div>
       <div class="flex-1 h-3 bg-slate-100 border border-slate-200 rounded-full overflow-hidden relative">
-        <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-1000 ease-out" :style="`width: ${dailyProgressPercentage}%`"></div>
+        <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-1000" :style="`width: ${dailyProgressPercentage}%`"></div>
       </div>
-      <div class="font-black text-emerald-600 w-12 text-right text-xs"><span x-text="dailyProgressPercentage"></span>%</div>
+      <div class="font-black text-emerald-600 w-12 text-right text-xs" x-text="dailyProgressPercentage + '%'"></div>
     </div>
     <div class="p-3 px-6 md:px-10 flex items-center gap-4 bg-slate-50">
       <div class="font-black text-[9px] uppercase tracking-widest text-slate-400 w-24">Weekly Avg</div>
       <div class="flex-1 h-2 bg-slate-200 border border-slate-300 rounded-full overflow-hidden relative">
-        <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-500 to-indigo-400 transition-all duration-1000 ease-out" style="width: 35%;"></div>
+        <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-500 to-indigo-400 transition-all duration-1000" style="width: 35%;"></div>
       </div>
       <div class="font-black text-indigo-500 w-12 text-right text-[10px]">35%</div>
     </div>
@@ -173,7 +173,7 @@
           <label class="block text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Saved Library</label>
           <div class="flex gap-2 pb-2">
             <template x-for="temp in habitTemplates" :key="temp.title">
-              <div class="flex items-center bg-emerald-50 border border-emerald-200 rounded-lg overflow-hidden text-xs font-bold text-emerald-800">
+              <div class="flex items-center bg-emerald-50 border border-emerald-200 rounded-lg overflow-hidden text-xs font-bold text-emerald-800 shrink-0">
                 <button @click="fillFromTemplate(temp)" class="px-3 py-1.5 hover:bg-emerald-100" x-text="temp.title"></button>
                 <button @click="deleteTemplate(temp.title)" class="px-2 py-1.5 border-l border-emerald-200 hover:bg-red-500 hover:text-white">&times;</button>
               </div>
@@ -182,23 +182,26 @@
         </div>
       </template>
       <div class="space-y-4">
-        <input x-model="newHabit.title" type="text" placeholder="Title..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none focus:border-emerald-600">
+        <input x-model="newHabit.title" type="text" placeholder="Title..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none focus:border-emerald-600 font-medium text-slate-800">
         <div class="grid grid-cols-2 gap-4">
-          <select x-model="newHabit.category" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none">
+          <select x-model="newHabit.category" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none appearance-none font-medium">
             <template x-for="cat in Object.keys(categoryIcons)"><option :value="cat" x-text="cat"></option></template>
           </select>
-          <select x-model="newHabit.timeOfDay" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none">
+          <select x-model="newHabit.timeOfDay" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none appearance-none font-medium">
             <option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="evening">Evening</option>
           </select>
         </div>
-        <input x-model="newHabit.duration" type="number" step="5" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none">
+        <div>
+          <label class="block text-xs font-bold text-slate-400 mb-1">DURATION (MIN)</label>
+          <input x-model="newHabit.duration" type="number" step="5" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none font-medium">
+        </div>
         <div class="flex justify-between gap-1">
-          <template x-for="day in daysOfWeek"><button @click="toggleDay(day)" :class="newHabit.days.includes(day) ? 'bg-emerald-600 text-white' : 'bg-slate-50 text-slate-400'" class="flex-1 py-2 text-[10px] font-bold rounded-lg border uppercase transition-colors" x-text="day"></button></template>
+          <template x-for="day in daysOfWeek"><button @click="toggleDay(day)" :class="newHabit.days.includes(day) ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 text-slate-400 border-slate-200'" class="flex-1 py-2 text-[10px] font-bold rounded-lg border uppercase transition-colors" x-text="day"></button></template>
         </div>
       </div>
       <div class="mt-8 flex gap-3">
-        <button @click="isAddModalOpen = false" class="flex-1 bg-white border border-slate-800 text-slate-800 font-bold py-3 rounded-xl">Cancel</button>
-        <button @click="saveHabit()" class="flex-1 bg-emerald-600 border border-emerald-800 text-white font-bold py-3 rounded-xl shadow-md">Save</button>
+        <button @click="isAddModalOpen = false" class="flex-1 bg-white border border-slate-800 text-slate-800 font-bold py-3 rounded-xl active:scale-95">Cancel</button>
+        <button @click="saveHabit()" class="flex-1 bg-emerald-600 border border-emerald-800 text-white font-bold py-3 rounded-xl shadow-md active:scale-95">Save</button>
       </div>
     </div>
   </div>
@@ -211,10 +214,7 @@
         currentDayString: new Date().toLocaleDateString('en-US', { weekday: 'short' }),
         profileImage: Alpine.$persist(null),
         habitTemplates: Alpine.$persist([]),
-        
-        // Requested static time ranges
         timeLabels: { morning: '(6:00 AM - 12:00 PM)', afternoon: '(12:00 PM - 6:00 PM)', evening: '(6:00 PM - 12:00 AM)' },
-
         healthPrefs: Alpine.$persist({ h_move: { timeOfDay: 'morning', order: -3 }, h_ex: { timeOfDay: 'afternoon', order: -2 }, h_sleep: { timeOfDay: 'evening', order: -1 } }),
         healthData: { calories: 0, goalCalories: 2500, exercise: 0, goalExercise: 30, sleep: 0, goalSleep: 7.5 },
 
@@ -244,7 +244,6 @@
           { id: 1, title: 'Morning Reading', timeOfDay: 'morning', category: 'Faith', duration: 15, checked: false, order: 0, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
           { id: 2, title: 'Review School Data', timeOfDay: 'afternoon', category: 'Work', duration: 60, checked: false, order: 1, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'] }
         ]),
-        
         categoryIcons: { 'Faith': '🕊️', 'Family': '👨‍👩‍👧', 'Friends/Others': '🤝', 'Health/Sleep': '🏃', 'Work': '💼', 'Home': '🏠', 'Leisure': '📖' },
         newHabit: { title: '', category: 'Health/Sleep', timeOfDay: 'morning', duration: 15, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
 
@@ -326,8 +325,7 @@
 
         get totalDailyMinutes() { return this.currentDayHabits.reduce((s, h) => s + h.duration, 0); },
         get dailyProgressPercentage() {
-          const total = this.totalDailyMinutes;
-          if (total === 0) return 0;
+          const total = this.totalDailyMinutes; if (total === 0) return 0;
           const done = this.currentDayHabits.filter(h => h.checked).reduce((s, h) => s + h.duration, 0);
           return Math.round((done / total) * 100);
         }
