@@ -100,29 +100,30 @@
                        :class="habit.checked && (!isEditing || habit.isWatch) ? 'h-full' : 'h-0'"></div>
 
                   <div class="flex items-center gap-3 relative z-10 pointer-events-none">
-                    <div @click.stop class="drag-handle pointer-events-auto text-slate-300 hover:text-slate-500 cursor-grab p-1 -ml-2">
+                    <div @click.stop class="drag-handle pointer-events-auto text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing p-1 -ml-2">
                       <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
                     </div>
 
-                    <div class="flex-1 flex justify-between items-start">
-                      <div class="pr-6">
-                        <div class="flex items-center gap-2 mb-1">
-                          <span class="text-lg" x-text="habit.isWatch ? '⌚' : categoryIcons[habit.category]"></span>
-                          <p :class="habit.checked && (!isEditing || habit.isWatch) ? 'text-emerald-900' : 'text-slate-500'" 
-                             class="text-[10px] uppercase tracking-widest font-bold transition-colors duration-1000">
-                            <span x-text="habit.category"></span>
-                          </p>
-                        </div>
-                        <h2 :class="habit.checked && (!isEditing || habit.isWatch) ? 'text-slate-900' : 'text-slate-900'" 
-                            class="text-lg font-bold leading-tight transition-colors duration-1000" 
-                            x-text="habit.title"></h2>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-0.5">
+                        <span class="text-lg" x-text="habit.isWatch ? '⌚' : categoryIcons[habit.category]"></span>
+                        <p :class="habit.checked && (!isEditing || habit.isWatch) ? 'text-emerald-900' : 'text-slate-500'" 
+                           class="text-[10px] uppercase tracking-widest font-black transition-colors duration-1000">
+                          <span x-text="habit.category"></span>
+                        </p>
                       </div>
-                      
-                      <div class="absolute bottom-4 right-5 text-[9px] font-black text-slate-400 uppercase tracking-tighter" 
-                           :class="habit.checked ? 'text-emerald-900 opacity-60' : 'text-slate-300'"
-                           x-text="habit.duration + ' min'"></div>
+                      <h2 :class="habit.checked && (!isEditing || habit.isWatch) ? 'text-slate-900 font-black' : 'text-slate-900 font-bold'" 
+                          class="text-lg leading-tight transition-colors duration-1000 truncate" 
+                          x-text="habit.title"></h2>
+                    </div>
 
-                      <div class="flex flex-col items-center justify-center min-h-[40px] pointer-events-auto shrink-0">
+                    <div class="flex items-center gap-4 shrink-0 ml-auto pointer-events-auto">
+                      
+                      <span class="text-[10px] font-black uppercase tracking-tighter transition-colors duration-1000 whitespace-nowrap" 
+                            :class="habit.checked ? 'text-emerald-900 opacity-40' : 'text-slate-300'"
+                            x-text="habit.duration + ' min'"></span>
+
+                      <div class="flex flex-col items-center justify-center min-h-[40px]">
                         <template x-if="!isEditing || habit.isWatch">
                           <div class="relative w-8 h-8">
                             <svg x-show="!habit.checked" x-cloak x-transition.opacity.duration.300ms class="absolute inset-0 w-8 h-8 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /></svg>
@@ -132,11 +133,12 @@
 
                         <template x-if="isEditing && !habit.isWatch">
                           <div class="flex flex-col gap-2 -mt-1">
-                            <button @click.stop="openEditModal(habit)" class="text-slate-400 hover:text-slate-800"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+                            <button @click.stop="openEditModal(habit)" class="text-slate-400 hover:text-slate-800 transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
                             <button @click.stop="deleteHabit(habit.id)" class="text-red-300 hover:text-red-600 text-lg font-black">&times;</button>
                           </div>
                         </template>
                       </div>
+
                     </div>
                   </div>
                 </div>
@@ -158,7 +160,7 @@
     </div>
     <div class="p-3 px-6 md:px-10 flex items-center gap-4 bg-slate-50">
       <div class="font-black text-[9px] uppercase tracking-widest text-slate-400 w-24">Weekly Avg</div>
-      <div class="flex-1 h-2 bg-slate-200 border border-slate-300 rounded-full overflow-hidden relative">
+      <div class="flex-1 h-2 bg-slate-200 border border-slate-300 rounded-full overflow-hidden relative shadow-inner">
         <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-500 to-indigo-400 transition-all duration-1000" style="width: 35%;"></div>
       </div>
       <div class="font-black text-indigo-500 w-12 text-right text-[10px]">35%</div>
@@ -196,7 +198,7 @@
           <input x-model="newHabit.duration" type="number" step="5" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 outline-none font-medium">
         </div>
         <div class="flex justify-between gap-1">
-          <template x-for="day in daysOfWeek"><button @click="toggleDay(day)" :class="newHabit.days.includes(day) ? 'bg-emerald-600 text-white border-emerald-800' : 'bg-slate-50 text-slate-400 border-slate-200'" class="flex-1 py-2 text-[10px] font-bold rounded-lg border uppercase transition-colors" x-text="day"></button></template>
+          <template x-for="day in daysOfWeek"><button @click="toggleDay(day)" :class="newHabit.days.includes(day) ? 'bg-emerald-600 text-white' : 'bg-slate-50 text-slate-400 border-slate-200'" class="flex-1 py-2 text-[10px] font-bold rounded-lg border uppercase transition-colors" x-text="day"></button></template>
         </div>
       </div>
       <div class="mt-8 flex gap-3">
@@ -244,6 +246,7 @@
           { id: 1, title: 'Morning Reading', timeOfDay: 'morning', category: 'Faith', duration: 15, checked: false, order: 0, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
           { id: 2, title: 'Review School Data', timeOfDay: 'afternoon', category: 'Work', duration: 60, checked: false, order: 1, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'] }
         ]),
+        
         categoryIcons: { 'Faith': '🕊️', 'Family': '👨‍👩‍👧', 'Friends/Others': '🤝', 'Health/Sleep': '🏃', 'Work': '💼', 'Home': '🏠', 'Leisure': '📖' },
         newHabit: { title: '', category: 'Health/Sleep', timeOfDay: 'morning', duration: 15, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
 
