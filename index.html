@@ -293,20 +293,25 @@
         async fetchHealthData() {
           const supabaseUrl = 'https://vzkkjpaqteiqyomwalzr.supabase.co'; 
           const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6a2tqcGFxdGVpcXlvbXdhbHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNjIwNjAsImV4cCI6MjA5MzkzODA2MH0.xu0nctOWwIPWQ5E-MzypSLOhhZmsIj-Np5o992tXN_Q'; 
+          
           const today = new Date();
           const dateString = today.toISOString().split('T')[0];
+
           try {
             const response = await fetch(`${supabaseUrl}/rest/v1/health_metrics?date=eq.${dateString}&select=*`, {
               headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` }
             });
             const data = await response.json();
+            
             if (data && data.length > 0) {
               const todayData = data[data.length - 1]; 
               this.healthData.calories = todayData.calories || 0;
               this.healthData.exercise = todayData.exercise || 0;
               this.healthData.sleep = todayData.sleep ? Math.round(todayData.sleep * 10) / 10 : 0; 
             }
-          } catch (error) { console.log("Could not fetch Apple Watch data:", error); }
+          } catch (error) {
+            console.log("Could not fetch Apple Watch data:", error);
+          }
         },
 
         lastOpenedDate: Alpine.$persist(new Date().toDateString()),
@@ -324,35 +329,47 @@
             this.habits.forEach(habit => habit.checked = false);
             this.lastOpenedDate = today;
           }
+
           this.habits.forEach((h, i) => { 
              if(h.order === undefined) h.order = i; 
              if(!h.days) h.days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
           });
+
           this.fetchHealthData();
+
           this.$nextTick(() => {
             ['morning', 'afternoon', 'evening'].forEach(timeBlock => {
               const el = document.getElementById('list-' + timeBlock);
               new Sortable(el, {
-                group: 'shared', handle: '.drag-handle', animation: 150, filter: 'button',
+                group: 'shared',
+                handle: '.drag-handle',
+                animation: 150,
+                filter: 'button',
                 onEnd: (evt) => {
                   const itemEl = evt.item;
                   const habitId = itemEl.dataset.id; 
                   const newTimeOfDay = evt.to.dataset.time;
+                  
                   const newOrders = {};
                   ['morning', 'afternoon', 'evening'].forEach(time => {
                     const listEl = document.getElementById('list-' + time);
                     const idsInDom = Array.from(listEl.querySelectorAll('.habit-card')).map(e => e.dataset.id);
                     idsInDom.forEach((id, newIndex) => { newOrders[id] = newIndex; });
                   });
+
                   if (evt.from !== evt.to) { evt.from.appendChild(itemEl); }
-                  if (habitId.startsWith('h_')) { this.healthPrefs[habitId].timeOfDay = newTimeOfDay; } 
-                  else {
+                  
+                  if (habitId.startsWith('h_')) {
+                    this.healthPrefs[habitId].timeOfDay = newTimeOfDay;
+                  } else {
                     const numId = parseInt(habitId);
                     const habitToMove = this.habits.find(h => h.id === numId);
                     if(habitToMove) habitToMove.timeOfDay = newTimeOfDay;
                   }
+                  
                   this.habits.forEach(h => { if (newOrders[h.id] !== undefined) h.order = newOrders[h.id]; });
                   Object.keys(this.healthPrefs).forEach(key => { if (newOrders[key] !== undefined) this.healthPrefs[key].order = newOrders[key]; });
+                  
                   this.habits = [...this.habits];
                   this.healthPrefs = {...this.healthPrefs};
                 }
@@ -378,47 +395,90 @@
           return [...healthTiles, ...this.habits].sort((a, b) => (a.order || 0) - (b.order || 0));
         },
 
-        get currentDayHabits() { return this.combinedHabits.filter(h => h.days.includes(this.currentDayString)); },
-        blockMinutes(block) { return this.currentDayHabits.filter(h => h.timeOfDay === block).reduce((sum, h) => sum + h.duration, 0); },
+        get currentDayHabits() {
+          return this.combinedHabits.filter(h => h.days.includes(this.currentDayString));
+        },
 
-        // UPDATED: Cloned staple sound for rapid-fire clicks
+        blockMinutes(block) {
+          return this.currentDayHabits.filter(h => h.timeOfDay === block).reduce((sum, h) => sum + h.duration, 0);
+        },
+
+        // Clean, single staple sound logic restored
         toggleHabit(id) {
           if(id.toString().startsWith('h_')) return;
+
           const habit = this.habits.find(h => h.id === id);
           if (habit) {
             habit.checked = !habit.checked;
             if (habit.checked) {
-              const sound = document.getElementById('clickSound').cloneNode();
-              sound.volume = 1.0;
-              sound.play().catch(e => console.log("Audio play failed"));
+              const audio = document.getElementById('clickSound');
+              audio.volume = 1.0;
+              audio.currentTime = 0;
+              audio.play().catch(e => console.log("Audio play failed"));
             }
           }
         },
 
-        deleteHabit(id) { this.habits = this.habits.filter(h => h.id !== id); },
-        fillFromTemplate(temp) { this.newHabit.title = temp.title; this.newHabit.category = temp.category; this.newHabit.duration = temp.duration; this.newHabit.timeOfDay = temp.timeOfDay; },
-        deleteTemplate(title) { this.habitTemplates = this.habitTemplates.filter(t => t.title !== title); },
-        toggleDay(day) { 
-          if (this.newHabit.days.includes(day)) { this.newHabit.days = this.newHabit.days.filter(d => d !== day); } 
-          else { this.newHabit.days.push(day); } 
+        deleteHabit(id) {
+          this.habits = this.habits.filter(h => h.id !== id);
         },
-        openAddModal() { this.editingHabitId = null; this.newHabit = { title: '', category: 'Health/Sleep', timeOfDay: 'morning', duration: 15, days: [...this.daysOfWeek] }; this.isAddModalOpen = true; },
-        openEditModal(habit) { this.editingHabitId = habit.id; this.newHabit = { title: habit.title, category: habit.category, timeOfDay: habit.timeOfDay, duration: habit.duration, days: [...habit.days] }; this.isAddModalOpen = true; },
+
+        fillFromTemplate(temp) {
+          this.newHabit.title = temp.title;
+          this.newHabit.category = temp.category;
+          this.newHabit.duration = temp.duration;
+          this.newHabit.timeOfDay = temp.timeOfDay;
+        },
+        deleteTemplate(title) {
+          this.habitTemplates = this.habitTemplates.filter(t => t.title !== title);
+        },
+
+        toggleDay(day) {
+          if (this.newHabit.days.includes(day)) {
+            this.newHabit.days = this.newHabit.days.filter(d => d !== day);
+          } else {
+            this.newHabit.days.push(day);
+          }
+        },
+
+        openAddModal() {
+          this.editingHabitId = null;
+          this.newHabit = { title: '', category: 'Health/Sleep', timeOfDay: 'morning', duration: 15, days: [...this.daysOfWeek] };
+          this.isAddModalOpen = true;
+        },
+
+        openEditModal(habit) {
+          this.editingHabitId = habit.id;
+          this.newHabit = { title: habit.title, category: habit.category, timeOfDay: habit.timeOfDay, duration: habit.duration, days: [...habit.days] };
+          this.isAddModalOpen = true;
+        },
+
         saveHabit() {
           if (!this.newHabit.title.trim() || this.newHabit.days.length === 0) return; 
+          
           if (!this.habitTemplates.some(t => t.title.toLowerCase() === this.newHabit.title.toLowerCase())) {
-            this.habitTemplates.push({ title: this.newHabit.title, category: this.newHabit.category, timeOfDay: this.newHabit.timeOfDay, duration: parseInt(this.newHabit.duration) });
+            this.habitTemplates.push({
+              title: this.newHabit.title, category: this.newHabit.category, timeOfDay: this.newHabit.timeOfDay, duration: parseInt(this.newHabit.duration)
+            });
           }
+
           if (this.editingHabitId) {
             const index = this.habits.findIndex(h => h.id === this.editingHabitId);
             if (index > -1) {
-              this.habits[index].title = this.newHabit.title; this.habits[index].category = this.newHabit.category; this.habits[index].timeOfDay = this.newHabit.timeOfDay; this.habits[index].duration = parseInt(this.newHabit.duration) || 5; this.habits[index].days = [...this.newHabit.days];
+              this.habits[index].title = this.newHabit.title;
+              this.habits[index].category = this.newHabit.category;
+              this.habits[index].timeOfDay = this.newHabit.timeOfDay;
+              this.habits[index].duration = parseInt(this.newHabit.duration) || 5;
+              this.habits[index].days = [...this.newHabit.days];
             }
           } else {
-            this.habits.push({ id: Date.now(), title: this.newHabit.title, timeOfDay: this.newHabit.timeOfDay, category: this.newHabit.category, duration: parseInt(this.newHabit.duration) || 5, checked: false, order: 999, days: [...this.newHabit.days] });
+            this.habits.push({
+              id: Date.now(), title: this.newHabit.title, timeOfDay: this.newHabit.timeOfDay, category: this.newHabit.category, duration: parseInt(this.newHabit.duration) || 5, checked: false, order: 999, days: [...this.newHabit.days]
+            });
           }
           this.isAddModalOpen = false;
         },
+
         get totalDailyMinutes() { return this.currentDayHabits.reduce((total, habit) => total + habit.duration, 0); },
         get completedDailyMinutes() { return this.currentDayHabits.filter(h => h.checked).reduce((total, habit) => total + habit.duration, 0); },
         get dailyProgressPercentage() {
