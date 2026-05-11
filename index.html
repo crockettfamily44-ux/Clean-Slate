@@ -13,7 +13,6 @@
     .sortable-ghost { opacity: 0.4; transform: scale(0.95); }
     .sortable-drag { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
     
-    /* Celebration Animation */
     @keyframes gentlePop {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.03); }
@@ -84,7 +83,6 @@
       <section class="mb-16">
         <h2 class="text-2xl font-light mb-8 text-slate-800 border-b border-slate-200 pb-2">Today</h2>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <!-- Note: 'day' (Anytime) is now moved to the end of the array -->
           <template x-for="timeBlock in ['morning', 'afternoon', 'evening', 'day']" :key="timeBlock">
             <div :class="sectionProgress('daily', timeBlock) === 100 && combinedHabits.filter(h => h.timeframe === 'daily' && h.timeOfDay === timeBlock).length > 0 ? 'animate-celebrate' : ''">
               
@@ -134,7 +132,7 @@
                                 class="text-base font-semibold transition-colors truncate" 
                                 x-text="habit.title"></h2>
                             
-                            <span class="text-xs font-medium text-slate-500 shrink-0 ml-2">
+                            <span x-show="habit.goalType !== 'checkoff'" class="text-xs font-medium text-slate-500 shrink-0 ml-2">
                               <span x-text="habit.progress || 0"></span> / <span x-text="getSmartTarget(habit.target)"></span>
                               <span x-text="habit.goalType === 'duration' ? 'm' : ''" class="text-[9px]"></span>
                             </span>
@@ -143,14 +141,14 @@
 
                         <!-- Actions (Edit/Log) -->
                         <div class="shrink-0 flex items-center">
-                          <template x-if="!isEditing && !habit.isWatch && (habit.progress || 0) < getSmartTarget(habit.target)">
+                          <template x-if="!isEditing && !habit.isWatch && (habit.progress || 0) < getSmartTarget(habit.target) && habit.goalType !== 'checkoff'">
                             <button @click.stop="showLog = !showLog; isCustom = false;" class="ml-2 text-xs border border-slate-200 bg-white rounded px-2 py-1 text-slate-500 hover:bg-slate-50 shadow-sm">Log</button>
                           </template>
                           
                           <template x-if="isEditing && !habit.isWatch">
                             <div class="flex gap-2 ml-2">
                               <button @click.stop="openEditModal(habit)" class="text-slate-400 hover:text-slate-800"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
-                              <button @click.stop="deleteHabit(habit.id)" class="text-red-400 hover:text-red-600 font-bold">&times;</button>
+                              <button @click.stop="deleteHabitGroup(habit.title)" class="text-red-400 hover:text-red-600 font-bold">&times;</button>
                             </div>
                           </template>
                         </div>
@@ -194,7 +192,6 @@
         <h2 class="text-2xl font-light mb-6 text-slate-800 tracking-tight">This Week</h2>
         <div class="w-full max-w-md flex flex-col gap-3" :class="sectionProgress('weekly', 'none') === 100 && combinedHabits.filter(h => h.timeframe === 'weekly').length > 0 ? 'animate-celebrate' : ''">
           <template x-for="habit in combinedHabits.filter(h => h.timeframe === 'weekly')" :key="habit.id">
-            <!-- Reuse Tile Layout for larger timeframes (No Drag Handle, Centered Logic) -->
             <div :data-id="habit.id" x-data="{ showLog: false, logVal: '', isCustom: false }" class="relative overflow-hidden border rounded-xl text-left bg-white shadow-sm transition-all duration-300">
               <div class="absolute left-0 top-0 h-full transition-all duration-700 ease-in-out z-0" :class="(habit.progress || 0) >= getSmartTarget(habit.target) ? 'bg-indigo-100/70' : 'bg-slate-50'" :style="`width: ${Math.min(((habit.progress || 0) / getSmartTarget(habit.target)) * 100, 100)}%`"></div>
               <div class="relative z-10 p-4">
@@ -202,16 +199,16 @@
                   <div class="flex-1 min-w-0 cursor-pointer" @click="if(!isEditing) quickComplete(habit);">
                     <div class="flex justify-between items-center">
                       <h2 :class="(habit.progress || 0) >= getSmartTarget(habit.target) && !isEditing ? 'text-indigo-800 line-through opacity-70' : 'text-slate-800'" class="text-base font-semibold truncate" x-text="habit.title"></h2>
-                      <span class="text-xs font-medium text-slate-500 shrink-0 ml-2">
+                      <span x-show="habit.goalType !== 'checkoff'" class="text-xs font-medium text-slate-500 shrink-0 ml-2">
                         <span x-text="habit.progress || 0"></span> / <span x-text="getSmartTarget(habit.target)"></span>
                       </span>
                     </div>
                   </div>
                   <div class="shrink-0 flex items-center">
-                    <template x-if="!isEditing && (habit.progress || 0) < getSmartTarget(habit.target)">
+                    <template x-if="!isEditing && (habit.progress || 0) < getSmartTarget(habit.target) && habit.goalType !== 'checkoff'">
                       <button @click.stop="showLog = !showLog; isCustom = false;" class="ml-2 text-xs border border-slate-200 bg-white rounded px-2 py-1 text-slate-500">Log</button>
                     </template>
-                    <template x-if="isEditing"><button @click.stop="deleteHabit(habit.id)" class="text-red-400 font-bold ml-3">&times;</button></template>
+                    <template x-if="isEditing"><button @click.stop="deleteHabitGroup(habit.title)" class="text-red-400 font-bold ml-3">&times;</button></template>
                   </div>
                 </div>
                 <!-- Log Dropdown -->
@@ -244,7 +241,6 @@
         <h2 class="text-2xl font-light mb-6 text-slate-800 tracking-tight">This Month</h2>
         <div class="w-full max-w-md flex flex-col gap-3" :class="sectionProgress('monthly', 'none') === 100 && combinedHabits.filter(h => h.timeframe === 'monthly').length > 0 ? 'animate-celebrate' : ''">
           <template x-for="habit in combinedHabits.filter(h => h.timeframe === 'monthly')" :key="habit.id">
-            <!-- Monthly Tile -->
             <div :data-id="habit.id" x-data="{ showLog: false, logVal: '', isCustom: false }" class="relative overflow-hidden border rounded-xl text-left bg-white shadow-sm transition-all duration-300">
               <div class="absolute left-0 top-0 h-full transition-all duration-700 ease-in-out z-0" :class="(habit.progress || 0) >= getSmartTarget(habit.target) ? 'bg-cyan-100/70' : 'bg-slate-50'" :style="`width: ${Math.min(((habit.progress || 0) / getSmartTarget(habit.target)) * 100, 100)}%`"></div>
               <div class="relative z-10 p-4">
@@ -252,16 +248,16 @@
                   <div class="flex-1 min-w-0 cursor-pointer" @click="if(!isEditing) quickComplete(habit);">
                     <div class="flex justify-between items-center">
                       <h2 :class="(habit.progress || 0) >= getSmartTarget(habit.target) && !isEditing ? 'text-cyan-800 line-through opacity-70' : 'text-slate-800'" class="text-base font-semibold truncate" x-text="habit.title"></h2>
-                      <span class="text-xs font-medium text-slate-500 shrink-0 ml-2">
+                      <span x-show="habit.goalType !== 'checkoff'" class="text-xs font-medium text-slate-500 shrink-0 ml-2">
                         <span x-text="habit.progress || 0"></span> / <span x-text="getSmartTarget(habit.target)"></span>
                       </span>
                     </div>
                   </div>
                   <div class="shrink-0 flex items-center">
-                    <template x-if="!isEditing && (habit.progress || 0) < getSmartTarget(habit.target)">
+                    <template x-if="!isEditing && (habit.progress || 0) < getSmartTarget(habit.target) && habit.goalType !== 'checkoff'">
                       <button @click.stop="showLog = !showLog; isCustom = false;" class="ml-2 text-xs border border-slate-200 bg-white rounded px-2 py-1 text-slate-500">Log</button>
                     </template>
-                    <template x-if="isEditing"><button @click.stop="deleteHabit(habit.id)" class="text-red-400 font-bold ml-3">&times;</button></template>
+                    <template x-if="isEditing"><button @click.stop="deleteHabitGroup(habit.title)" class="text-red-400 font-bold ml-3">&times;</button></template>
                   </div>
                 </div>
                 <!-- Log Dropdown -->
@@ -294,7 +290,6 @@
         <h2 class="text-2xl font-light mb-6 text-slate-800 tracking-tight">This Year</h2>
         <div class="w-full max-w-md flex flex-col gap-3" :class="sectionProgress('yearly', 'none') === 100 && combinedHabits.filter(h => h.timeframe === 'yearly').length > 0 ? 'animate-celebrate' : ''">
           <template x-for="habit in combinedHabits.filter(h => h.timeframe === 'yearly')" :key="habit.id">
-            <!-- Yearly Tile -->
             <div :data-id="habit.id" x-data="{ showLog: false, logVal: '', isCustom: false }" class="relative overflow-hidden border rounded-xl text-left bg-white shadow-sm transition-all duration-300">
               <div class="absolute left-0 top-0 h-full transition-all duration-700 ease-in-out z-0" :class="(habit.progress || 0) >= getSmartTarget(habit.target) ? 'bg-amber-100/70' : 'bg-slate-50'" :style="`width: ${Math.min(((habit.progress || 0) / getSmartTarget(habit.target)) * 100, 100)}%`"></div>
               <div class="relative z-10 p-4">
@@ -302,16 +297,16 @@
                   <div class="flex-1 min-w-0 cursor-pointer" @click="if(!isEditing) quickComplete(habit);">
                     <div class="flex justify-between items-center">
                       <h2 :class="(habit.progress || 0) >= getSmartTarget(habit.target) && !isEditing ? 'text-amber-800 line-through opacity-70' : 'text-slate-800'" class="text-base font-semibold truncate" x-text="habit.title"></h2>
-                      <span class="text-xs font-medium text-slate-500 shrink-0 ml-2">
+                      <span x-show="habit.goalType !== 'checkoff'" class="text-xs font-medium text-slate-500 shrink-0 ml-2">
                         <span x-text="habit.progress || 0"></span> / <span x-text="getSmartTarget(habit.target)"></span>
                       </span>
                     </div>
                   </div>
                   <div class="shrink-0 flex items-center">
-                    <template x-if="!isEditing && (habit.progress || 0) < getSmartTarget(habit.target)">
+                    <template x-if="!isEditing && (habit.progress || 0) < getSmartTarget(habit.target) && habit.goalType !== 'checkoff'">
                       <button @click.stop="showLog = !showLog; isCustom = false;" class="ml-2 text-xs border border-slate-200 bg-white rounded px-2 py-1 text-slate-500">Log</button>
                     </template>
-                    <template x-if="isEditing"><button @click.stop="deleteHabit(habit.id)" class="text-red-400 font-bold ml-3">&times;</button></template>
+                    <template x-if="isEditing"><button @click.stop="deleteHabitGroup(habit.title)" class="text-red-400 font-bold ml-3">&times;</button></template>
                   </div>
                 </div>
                 <!-- Log Dropdown -->
@@ -340,91 +335,98 @@
     </div>
   </div>
 
-  <!-- ADD HABIT MODAL (REDESIGNED) -->
-  <div x-show="isAddModalOpen" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-    <div @click.away="isAddModalOpen = false" class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-slate-200 my-8">
-      <h3 class="text-xl font-semibold mb-5 text-slate-800" x-text="editingHabitId ? 'Edit Goal' : 'New Goal'"></h3>
+  <!-- ADD/EDIT HABIT MODAL (NEW DESIGN) -->
+  <div x-show="isAddModalOpen" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4 overflow-y-auto">
+    <div @click.away="isAddModalOpen = false" class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl my-8">
       
-      <div class="space-y-5">
+      <h3 class="text-2xl font-bold mb-6 text-slate-800 text-center" x-text="editingHabitTitle ? 'Edit Habit' : 'New Habit'"></h3>
+      
+      <div class="space-y-6">
         
-        <!-- Name Input -->
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Goal Name (Links Timeframes)</label>
-          <input x-model="newHabit.title" type="text" placeholder="e.g. Walk" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:border-emerald-500 font-medium text-slate-800">
-        </div>
+        <!-- Title Input -->
+        <input x-model="newHabitForm.title" type="text" placeholder="Morning meditation..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-xl outline-none focus:border-emerald-500 focus:bg-white font-medium text-slate-800 shadow-inner transition-colors">
         
-        <!-- Timeframe Buttons -->
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Timeframe</label>
-          <div class="flex gap-1.5 bg-slate-50 border border-slate-200 p-1 rounded-xl">
-            <button @click="newHabit.timeframe = 'daily'" :class="newHabit.timeframe === 'daily' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all">Daily</button>
-            <button @click="newHabit.timeframe = 'weekly'" :class="newHabit.timeframe === 'weekly' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all">Weekly</button>
-            <button @click="newHabit.timeframe = 'monthly'" :class="newHabit.timeframe === 'monthly' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all">Monthly</button>
-            <button @click="newHabit.timeframe = 'yearly'" :class="newHabit.timeframe === 'yearly' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all">Yearly</button>
-          </div>
+        <!-- Category & Goal Type Dropdowns -->
+        <div class="grid grid-cols-2 gap-4">
+          <select x-model="newHabitForm.category" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 font-medium text-slate-700">
+            <template x-for="cat in Object.keys(categoryIcons)"><option :value="cat" x-text="cat"></option></template>
+          </select>
+          <select x-model="newHabitForm.goalType" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 font-medium text-slate-700">
+            <option value="checkoff">None (Checkoff)</option>
+            <option value="duration">Duration (Time)</option>
+            <option value="frequency">Frequency (Events)</option>
+          </select>
         </div>
 
-        <!-- Daily Options (Time of Day & Days of Week) -->
-        <div x-show="newHabit.timeframe === 'daily'" x-collapse class="space-y-4 pt-2 border-t border-slate-100">
-          <div>
-            <label class="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Time of Day</label>
-            <div class="flex gap-1.5">
-              <button @click="newHabit.timeOfDay = 'morning'" :class="newHabit.timeOfDay === 'morning' ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'" class="flex-1 py-1.5 rounded border text-[10px] font-bold uppercase transition-colors">Morning</button>
-              <button @click="newHabit.timeOfDay = 'afternoon'" :class="newHabit.timeOfDay === 'afternoon' ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'" class="flex-1 py-1.5 rounded border text-[10px] font-bold uppercase transition-colors">Afternoon</button>
-              <button @click="newHabit.timeOfDay = 'evening'" :class="newHabit.timeOfDay === 'evening' ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'" class="flex-1 py-1.5 rounded border text-[10px] font-bold uppercase transition-colors">Evening</button>
-              <button @click="newHabit.timeOfDay = 'day'" :class="newHabit.timeOfDay === 'day' ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'" class="flex-1 py-1.5 rounded border text-[10px] font-bold uppercase transition-colors">Anytime</button>
-            </div>
+        <!-- Timeframes & Goals Stack -->
+        <div class="space-y-3 bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-inner">
+          
+          <!-- Daily Row -->
+          <div class="flex items-center gap-3">
+            <input type="checkbox" x-model="newHabitForm.timeframes.daily.active" class="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 shrink-0 cursor-pointer">
+            <span class="text-sm font-bold text-slate-700 w-16 shrink-0">Daily</span>
+            <select x-show="newHabitForm.timeframes.daily.active" x-model="newHabitForm.timeframes.daily.timeOfDay" class="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none font-medium">
+              <option value="morning">Morning</option>
+              <option value="afternoon">Afternoon</option>
+              <option value="evening">Evening</option>
+              <option value="day">Anytime</option>
+            </select>
+            <input x-show="newHabitForm.timeframes.daily.active && newHabitForm.goalType !== 'checkoff'" x-model="newHabitForm.timeframes.daily.target" type="number" placeholder="Amt" class="w-20 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none text-center font-medium">
           </div>
-          <div>
-            <label class="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Active Days</label>
-            <div class="flex justify-between gap-1">
-              <template x-for="day in daysOfWeek">
-                <button @click="toggleDay(day)" :class="newHabit.days.includes(day) ? 'bg-slate-700 text-white border-slate-700' : 'bg-white text-slate-400 border-slate-200'" class="flex-1 py-1.5 text-[9px] font-bold rounded border uppercase transition-colors" x-text="day"></button>
-              </template>
-            </div>
+
+          <!-- Weekly Row -->
+          <div class="flex items-center gap-3">
+            <input type="checkbox" x-model="newHabitForm.timeframes.weekly.active" class="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 shrink-0 cursor-pointer">
+            <span class="text-sm font-bold text-slate-700 w-16 shrink-0">Weekly</span>
+            <div class="flex-1"></div>
+            <input x-show="newHabitForm.timeframes.weekly.active && newHabitForm.goalType !== 'checkoff'" x-model="newHabitForm.timeframes.weekly.target" type="number" placeholder="Amt" class="w-20 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none text-center font-medium">
           </div>
+
+          <!-- Monthly Row -->
+          <div class="flex items-center gap-3">
+            <input type="checkbox" x-model="newHabitForm.timeframes.monthly.active" class="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 shrink-0 cursor-pointer">
+            <span class="text-sm font-bold text-slate-700 w-16 shrink-0">Monthly</span>
+            <div class="flex-1"></div>
+            <input x-show="newHabitForm.timeframes.monthly.active && newHabitForm.goalType !== 'checkoff'" x-model="newHabitForm.timeframes.monthly.target" type="number" placeholder="Amt" class="w-20 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none text-center font-medium">
+          </div>
+
+          <!-- Yearly Row -->
+          <div class="flex items-center gap-3">
+            <input type="checkbox" x-model="newHabitForm.timeframes.yearly.active" class="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 shrink-0 cursor-pointer">
+            <span class="text-sm font-bold text-slate-700 w-16 shrink-0">Yearly</span>
+            <div class="flex-1"></div>
+            <input x-show="newHabitForm.timeframes.yearly.active && newHabitForm.goalType !== 'checkoff'" x-model="newHabitForm.timeframes.yearly.target" type="number" placeholder="Amt" class="w-20 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none text-center font-medium">
+          </div>
+
         </div>
 
-        <!-- Goal Configuration -->
-        <div class="pt-2 border-t border-slate-100">
-          <label class="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Goal & Target</label>
-          <div class="flex flex-col gap-3">
-            
-            <!-- Type Toggle -->
-            <div class="flex bg-slate-50 border border-slate-200 p-1 rounded-lg">
-              <button @click="newHabit.goalType = 'duration'" :class="newHabit.goalType === 'duration' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'" class="flex-1 py-1.5 text-xs font-bold rounded-md transition-all">Duration (Time)</button>
-              <button @click="newHabit.goalType = 'frequency'" :class="newHabit.goalType === 'frequency' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'" class="flex-1 py-1.5 text-xs font-bold rounded-md transition-all">Frequency (Events)</button>
-            </div>
-
-            <!-- Target Input & Unit Toggle -->
-            <div class="flex items-center gap-2">
-              <input x-model="newHabit.targetNumber" type="number" placeholder="Number..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 outline-none focus:border-emerald-500 font-medium text-slate-800 text-sm">
-              
-              <div x-show="newHabit.goalType === 'duration'" class="flex bg-slate-50 border border-slate-200 p-1 rounded-lg shrink-0">
-                 <button @click="newHabit.targetUnit = 'min'" :class="newHabit.targetUnit === 'min' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'" class="px-3 py-1.5 text-xs font-bold rounded-md transition-all">Min</button>
-                 <button @click="newHabit.targetUnit = 'hr'" :class="newHabit.targetUnit === 'hr' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'" class="px-3 py-1.5 text-xs font-bold rounded-md transition-all">Hr</button>
-              </div>
-              <div x-show="newHabit.goalType === 'frequency'" class="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">
-                 Times
-              </div>
-            </div>
-
-          </div>
+        <!-- Active Days Pills -->
+        <div class="flex justify-between gap-2">
+          <template x-for="day in daysOfWeek">
+            <button @click="toggleDay(day)" 
+                    :class="newHabitForm.days.includes(day) ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-white text-slate-400 border-slate-300 hover:bg-slate-50'" 
+                    class="flex-1 py-2 text-[10px] font-bold rounded-full border uppercase transition-colors shadow-sm" 
+                    x-text="day"></button>
+          </template>
         </div>
 
       </div>
       
-      <div class="mt-8 flex gap-3">
-        <button @click="isAddModalOpen = false" class="flex-1 bg-white border border-slate-200 text-slate-600 font-bold py-2.5 rounded-lg active:scale-95 text-sm hover:bg-slate-50 transition-colors">Cancel</button>
-        <button @click="saveHabit()" class="flex-1 bg-slate-800 border border-slate-900 text-white font-bold py-2.5 rounded-lg shadow-sm active:scale-95 text-sm hover:bg-slate-700 transition-colors">Save Goal</button>
+      <!-- Action Buttons -->
+      <div class="mt-10 flex gap-4">
+        <button @click="isAddModalOpen = false" class="flex-1 bg-white border-2 border-slate-200 text-slate-600 font-bold py-3.5 rounded-xl active:scale-95 text-base hover:bg-slate-50 transition-colors">Cancel</button>
+        <button @click="saveHabit()" class="flex-1 bg-emerald-500 border border-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 text-base hover:bg-emerald-600 transition-colors">Save Habit</button>
       </div>
+
     </div>
   </div>
 
   <script>
     document.addEventListener('alpine:init', () => {
       Alpine.data('habitApp', () => ({
-        isEditing: false, isAddModalOpen: false, editingHabitId: null,
+        isEditing: false, 
+        isAddModalOpen: false, 
+        editingHabitTitle: null, // Track edits by group title
         daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         currentDayString: new Date().toLocaleDateString('en-US', { weekday: 'short' }),
         profileImage: Alpine.$persist(null),
@@ -432,10 +434,19 @@
         
         habits: Alpine.$persist([
           { id: 1, title: 'Read', timeframe: 'daily', timeOfDay: 'morning', category: 'Leisure', goalType: 'duration', target: 20, progress: 0, order: 0, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
-          { id: 2, title: 'Read', timeframe: 'weekly', timeOfDay: 'none', category: 'Leisure', goalType: 'duration', target: 140, progress: 0, order: 1, days: [] }
+          { id: 2, title: 'Read', timeframe: 'weekly', timeOfDay: 'none', category: 'Leisure', goalType: 'duration', target: 140, progress: 0, order: 1, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] }
         ]),
         
-        newHabit: { title: '', timeframe: 'daily', timeOfDay: 'day', category: 'Health/Sleep', goalType: 'duration', targetNumber: 30, targetUnit: 'min', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+        newHabitForm: {
+          title: '', category: 'Health/Sleep', goalType: 'checkoff', days: [],
+          timeframes: {
+            daily: { active: true, timeOfDay: 'day', target: '' },
+            weekly: { active: false, target: '' },
+            monthly: { active: false, target: '' },
+            yearly: { active: false, target: '' }
+          }
+        },
+
         healthPrefs: Alpine.$persist({ h_move: { timeOfDay: 'day', order: -3 }, h_ex: { timeOfDay: 'day', order: -2 }, h_sleep: { timeOfDay: 'morning', order: -1 } }),
         healthData: { calories: 0, goalCalories: 2500, exercise: 0, goalExercise: 30, sleep: 0, goalSleep: 7.5 },
         lastOpenedDate: Alpine.$persist(new Date().toDateString()),
@@ -522,16 +533,28 @@
           
           this.habits = this.habits.map(h => {
             if (h.title.toLowerCase().trim() === groupTitle) {
-              const newProgress = (h.progress || 0) + amount;
+              // Ensure we don't drop below 0
+              const newProgress = Math.max(0, (h.progress || 0) + amount);
               return { ...h, progress: newProgress };
             }
             return h;
           });
           
-          document.getElementById('clickSound').cloneNode().play();
+          if (amount > 0) {
+             document.getElementById('clickSound').cloneNode().play();
+          }
         },
 
         quickComplete(habit) {
+          // Binary mode handling
+          if (habit.goalType === 'checkoff') {
+             const isComplete = (habit.progress || 0) >= 1;
+             const increment = isComplete ? -1 : 1; // Toggle on/off
+             this.logTime(habit, increment);
+             return;
+          }
+
+          // Duration/Frequency handling
           const target = this.getSmartTarget(habit.target);
           const current = habit.progress || 0;
           const needed = target - current;
@@ -578,59 +601,103 @@
           return Math.round((totalProgress / totalTarget) * 100);
         },
 
-        deleteHabit(id) { this.habits = this.habits.filter(h => h.id !== id); },
-        toggleDay(d) { if (this.newHabit.days.includes(d)) { this.newHabit.days = this.newHabit.days.filter(x => x !== d); } else { this.newHabit.days.push(d); } },
+        deleteHabitGroup(title) { 
+           this.habits = this.habits.filter(h => h.title.toLowerCase().trim() !== title.toLowerCase().trim()); 
+        },
+
+        toggleDay(d) { 
+           if (this.newHabitForm.days.includes(d)) { 
+              this.newHabitForm.days = this.newHabitForm.days.filter(x => x !== d); 
+           } else { 
+              this.newHabitForm.days.push(d); 
+           } 
+        },
         
         openAddModal() { 
-          this.editingHabitId = null; 
-          this.newHabit = { title: '', timeframe: 'daily', timeOfDay: 'day', category: 'Health/Sleep', goalType: 'duration', targetNumber: 30, targetUnit: 'min', days: [...this.daysOfWeek] }; 
+          this.editingHabitTitle = null; 
+          this.newHabitForm = { 
+            title: '', category: 'Health/Sleep', goalType: 'checkoff', days: [...this.daysOfWeek],
+            timeframes: {
+               daily: { active: true, timeOfDay: 'day', target: '' },
+               weekly: { active: false, target: '' },
+               monthly: { active: false, target: '' },
+               yearly: { active: false, target: '' }
+            }
+          }; 
           this.isAddModalOpen = true; 
         },
         
         openEditModal(h) { 
-          this.editingHabitId = h.id; 
-          Object.assign(this.newHabit, h); 
-          this.newHabit.days = h.days ? [...h.days] : []; 
+          this.editingHabitTitle = h.title.toLowerCase().trim();
           
-          // Reverse engineer the target back to the input UI
-          if (h.goalType === 'duration' && h.target >= 60 && h.target % 60 === 0) {
-            this.newHabit.targetNumber = h.target / 60;
-            this.newHabit.targetUnit = 'hr';
-          } else {
-            this.newHabit.targetNumber = parseInt(h.target) || 0;
-            this.newHabit.targetUnit = 'min';
-          }
+          // Gather all habits in this title group
+          const group = this.habits.filter(item => item.title.toLowerCase().trim() === this.editingHabitTitle);
+          const base = group[0];
           
+          // Reset form with base info
+          this.newHabitForm = { 
+            title: base.title, 
+            category: base.category || 'Health/Sleep', 
+            goalType: base.goalType || 'checkoff', 
+            days: base.days ? [...base.days] : [...this.daysOfWeek],
+            timeframes: {
+               daily: { active: false, timeOfDay: 'day', target: '' },
+               weekly: { active: false, target: '' },
+               monthly: { active: false, target: '' },
+               yearly: { active: false, target: '' }
+            }
+          };
+          
+          // Populate active timeframes from group data
+          group.forEach(item => {
+             if (this.newHabitForm.timeframes[item.timeframe]) {
+                this.newHabitForm.timeframes[item.timeframe].active = true;
+                this.newHabitForm.timeframes[item.timeframe].target = (item.target === 1 && item.goalType === 'checkoff') ? '' : item.target;
+                if (item.timeframe === 'daily') {
+                   this.newHabitForm.timeframes.daily.timeOfDay = item.timeOfDay || 'day';
+                }
+             }
+          });
+
           this.isAddModalOpen = true; 
         },
 
         saveHabit() {
-          if (!this.newHabit.title.trim()) return;
+          const form = this.newHabitForm;
+          if (!form.title.trim()) return;
           
-          // Calculate final numeric target
-          let finalTarget = parseInt(this.newHabit.targetNumber) || 0;
-          if (this.newHabit.goalType === 'duration' && this.newHabit.targetUnit === 'hr') {
-            finalTarget = finalTarget * 60;
+          const groupTitle = form.title.toLowerCase().trim();
+          
+          // If editing, extract old progress then remove old habits
+          let oldProgressMap = {};
+          if (this.editingHabitTitle) {
+             const oldHabits = this.habits.filter(h => h.title.toLowerCase().trim() === this.editingHabitTitle);
+             oldHabits.forEach(h => { oldProgressMap[h.timeframe] = h.progress; });
+             this.deleteHabitGroup(this.editingHabitTitle);
           }
           
-          const habitToSave = {
-             ...this.newHabit,
-             target: finalTarget
-          };
-          delete habitToSave.targetNumber; // Clean up temp UI states
-          delete habitToSave.targetUnit;
-          
-          if (this.editingHabitId) {
-            const h = this.habits.find(h => h.id === this.editingHabitId);
-            if (h) { Object.assign(h, habitToSave); }
-          } else {
-            this.habits.push({ 
-              id: Date.now(), 
-              ...habitToSave, 
-              progress: 0, 
-              order: 999 
-            });
-          }
+          // Build new habit array based on active timeframes
+          Object.keys(form.timeframes).forEach(tf => {
+             const tfData = form.timeframes[tf];
+             if (tfData.active) {
+                const targetVal = form.goalType === 'checkoff' ? 1 : (parseInt(tfData.target) || 0);
+                const progressVal = oldProgressMap[tf] || 0;
+                
+                this.habits.push({
+                   id: Date.now() + Math.random(),
+                   title: form.title.trim(),
+                   timeframe: tf,
+                   timeOfDay: tf === 'daily' ? tfData.timeOfDay : 'none',
+                   category: form.category,
+                   goalType: form.goalType,
+                   target: targetVal,
+                   progress: progressVal,
+                   days: [...form.days],
+                   order: 999
+                });
+             }
+          });
+
           this.isAddModalOpen = false;
         }
 
