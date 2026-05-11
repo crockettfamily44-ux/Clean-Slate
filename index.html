@@ -26,8 +26,9 @@
 <body class="bg-gradient-to-br from-slate-50 via-white to-slate-100 font-sans text-slate-900 antialiased overflow-x-hidden selection:bg-emerald-100 min-h-screen" x-data="habitApp">
 
   <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2995/2995-preview.mp3" preload="auto"></audio>
-  <audio id="celebrationSound" src="https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3" preload="auto"></audio>
   <audio id="weeklySound" src="https://assets.mixkit.co/active_storage/sfx/600/600-preview.mp3" preload="auto"></audio>
+  <audio id="monthlySound" src="https://assets.mixkit.co/active_storage/sfx/975/975-preview.mp3" preload="auto"></audio>
+  <audio id="yearlySound" src="https://assets.mixkit.co/active_storage/sfx/2985/2985-preview.mp3" preload="auto"></audio>
 
   <div x-show="celebration.active" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" x-show="celebration.active" x-transition.opacity.duration.300ms></div>
@@ -627,8 +628,10 @@
            
            if (habit.timeframe === 'weekly') {
                document.getElementById('weeklySound').cloneNode().play();
-           } else {
-               document.getElementById('celebrationSound').cloneNode().play();
+           } else if (habit.timeframe === 'monthly') {
+               document.getElementById('monthlySound').cloneNode().play();
+           } else if (habit.timeframe === 'yearly') {
+               document.getElementById('yearlySound').cloneNode().play();
            }
            
            var duration = 2000;
