@@ -6,6 +6,8 @@
   <title>Clean Slate</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  <!-- Canvas Confetti for Celebrations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style> 
@@ -24,9 +26,27 @@
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-white to-slate-100 font-sans text-slate-900 antialiased overflow-x-hidden selection:bg-emerald-100 min-h-screen" x-data="habitApp">
 
+  <!-- Audio Elements -->
   <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2995/2995-preview.mp3" preload="auto"></audio>
+  <audio id="celebrationSound" src="https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3" preload="auto"></audio>
 
-  <div class="w-full pb-40">
+  <!-- Global Milestone Celebration Overlay -->
+  <div x-show="celebration.active" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+     <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" x-show="celebration.active" x-transition.opacity.duration.300ms></div>
+     <div class="relative bg-white/95 backdrop-blur-md rounded-3xl p-10 shadow-2xl flex flex-col items-center transform transition-all"
+          x-show="celebration.active" x-transition:enter="ease-out duration-500" x-transition:enter-start="scale-50 translate-y-12 opacity-0" x-transition:enter-end="scale-100 translate-y-0 opacity-100" x-transition:leave="ease-in duration-300" x-transition:leave-start="scale-100 opacity-100" x-transition:leave-end="scale-90 opacity-0">
+        <div class="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-5 shadow-inner">
+           <svg class="w-12 h-12 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+        </div>
+        <h2 class="text-3xl font-black text-slate-800 mb-2 tracking-tight">Goal Reached!</h2>
+        <p class="text-slate-500 font-medium text-lg text-center">
+          <span class="font-bold text-emerald-600" x-text="celebration.title"></span><br>
+          <span class="text-sm uppercase tracking-widest" x-text="celebration.timeframe + ' Milestone'"></span>
+        </p>
+     </div>
+  </div>
+
+  <div class="w-full pb-40 relative z-10">
     <div class="max-w-7xl mx-auto p-6 md:p-10">
       
       <!-- HEADER -->
@@ -124,7 +144,11 @@
                         </div>
 
                         <!-- Content & Action Body -->
-                        <div class="flex-1 min-w-0 cursor-pointer" @click="if(!isEditing && !habit.isWatch) { if(habit.goalType === 'checkoff') quickComplete(habit); else { showLog = !showLog; isCustom = true; } }">
+                        <div class="flex-1 min-w-0 cursor-pointer" @click="if(!isEditing && !habit.isWatch) { 
+                           if(habit.goalType === 'checkoff') quickComplete(habit); 
+                           else if(habit.goalType === 'subtasks') showLog = !showLog;
+                           else { showLog = !showLog; isCustom = true; } 
+                        }">
                           <div class="flex items-center gap-1.5 mb-0.5">
                             <span class="text-sm" x-text="habit.isWatch ? '⌚' : categoryIcons[habit.category]"></span>
                             <p :class="(habit.progress || 0) >= getSmartTarget(habit.target) ? 'text-emerald-900' : 'text-slate-400'" class="text-[9px] uppercase tracking-widest font-bold truncate transition-colors duration-500" x-text="habit.category"></p>
@@ -134,7 +158,7 @@
                                 class="text-base font-semibold transition-colors duration-500 truncate" 
                                 x-text="habit.title"></h2>
                             
-                            <!-- Hide the 1/1 counter if it's a Checkoff goal -->
+                            <!-- Hide counter if Checkoff -->
                             <span x-show="habit.goalType !== 'checkoff'" 
                                   :class="(habit.progress || 0) >= getSmartTarget(habit.target) ? 'text-emerald-900 font-bold' : 'text-slate-500'" 
                                   class="text-xs font-medium shrink-0 ml-2 transition-colors duration-500">
@@ -144,12 +168,8 @@
                           </div>
                         </div>
 
-                        <!-- Actions (Edit/Quick Log) -->
+                        <!-- Actions (Edit) -->
                         <div class="shrink-0 flex items-center relative z-20">
-                          <template x-if="!isEditing && !habit.isWatch && (habit.progress || 0) < getSmartTarget(habit.target) && habit.goalType !== 'checkoff'">
-                            <button @click.stop="showLog = !showLog; isCustom = false;" class="ml-2 text-xs border border-slate-200 bg-white/90 rounded px-2 py-1 text-slate-500 hover:bg-white shadow-sm transition-all">Log</button>
-                          </template>
-                          
                           <template x-if="isEditing && !habit.isWatch">
                             <div class="flex gap-2 ml-2 bg-white/80 rounded px-2 py-1 backdrop-blur-sm">
                               <button @click.stop="openEditModal(habit)" class="text-slate-400 hover:text-slate-800"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
@@ -159,22 +179,40 @@
                         </div>
                       </div>
 
-                      <!-- Log Dropdown / Input -->
+                      <!-- Log Dropdown / Input / Subtasks -->
                       <div x-show="showLog" x-cloak x-collapse class="mt-3 pt-3 border-t border-slate-200/50 relative z-20">
-                        <template x-if="!isCustom">
-                          <select x-model="logVal" 
-                                  @change="if(logVal==='custom'){ isCustom=true; logVal=''; } else if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; logVal=''; }" 
-                                  class="w-full bg-white/90 border border-slate-200 rounded p-1.5 text-sm text-slate-600 outline-none shadow-sm backdrop-blur-sm cursor-pointer">
-                            <option value="">Select quick time...</option>
-                            <template x-for="i in 24"><option :value="i*5" x-text="(i*5) + ' mins'"></option></template>
-                            <option value="custom">Custom...</option>
-                          </select>
+                        
+                        <!-- Subtasks Mode -->
+                        <template x-if="habit.goalType === 'subtasks'">
+                           <div class="space-y-1 bg-white/60 backdrop-blur-sm rounded-xl p-2 shadow-sm border border-slate-100">
+                              <template x-for="(st, index) in habit.subtaskList" :key="index">
+                                 <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-lg transition-colors">
+                                    <input type="checkbox" :checked="st.done" @change="toggleSubtask(habit.id, index)" class="w-4 h-4 text-emerald-500 border-slate-300 rounded focus:ring-emerald-500">
+                                    <span :class="st.done ? 'line-through text-slate-400' : 'text-slate-700'" class="text-sm font-medium transition-all duration-300" x-text="st.text"></span>
+                                 </label>
+                              </template>
+                           </div>
                         </template>
-                        <template x-if="isCustom">
-                          <form @submit.prevent="if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; isCustom=false; logVal=''; }" class="flex gap-2">
-                            <input type="number" x-model="logVal" placeholder="Amount to log..." class="w-full border border-slate-200 rounded p-1.5 text-sm bg-white/90 outline-none shadow-sm backdrop-blur-sm" autofocus>
-                            <button type="submit" class="bg-emerald-600 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-emerald-700 shadow-sm">Save</button>
-                          </form>
+
+                        <!-- Standard Log Mode -->
+                        <template x-if="habit.goalType !== 'subtasks'">
+                           <div>
+                              <template x-if="!isCustom">
+                              <select x-model="logVal" 
+                                      @change="if(logVal==='custom'){ isCustom=true; logVal=''; } else if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; logVal=''; }" 
+                                      class="w-full bg-white/90 border border-slate-200 rounded-lg p-2 text-sm text-slate-600 outline-none shadow-sm backdrop-blur-sm cursor-pointer font-medium">
+                                 <option value="">Select quick time...</option>
+                                 <template x-for="i in 24"><option :value="i*5" x-text="(i*5) + ' mins'"></option></template>
+                                 <option value="custom">Custom...</option>
+                              </select>
+                              </template>
+                              <template x-if="isCustom">
+                              <form @submit.prevent="if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; isCustom=false; logVal=''; }" class="flex gap-2">
+                                 <input type="number" x-model="logVal" placeholder="Amount..." class="w-full border border-slate-200 rounded-lg p-2 text-sm bg-white/90 outline-none shadow-sm backdrop-blur-sm font-medium" autofocus>
+                                 <button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-700 shadow-sm transition-colors">Save</button>
+                              </form>
+                              </template>
+                           </div>
                         </template>
                       </div>
 
@@ -210,16 +248,13 @@
                     </div>
                   </div>
                   <div class="shrink-0 flex items-center relative z-20">
-                    <template x-if="!isEditing && (habit.progress || 0) < getSmartTarget(habit.target) && habit.goalType !== 'checkoff'">
-                      <button @click.stop="showLog = !showLog; isCustom = false;" class="ml-2 text-xs border border-slate-200 bg-white/90 rounded px-2 py-1 text-slate-500 shadow-sm hover:bg-white transition-all">Log</button>
-                    </template>
                     <template x-if="isEditing"><button @click.stop="deleteHabitGroup(habit.title)" class="text-red-400 font-bold ml-3 bg-white/80 px-2 py-1 rounded backdrop-blur-sm">&times;</button></template>
                   </div>
                 </div>
                 <!-- Log Dropdown -->
                 <div x-show="showLog" x-cloak x-collapse class="mt-3 pt-3 border-t border-slate-200/50 relative z-20">
                   <template x-if="!isCustom">
-                    <select x-model="logVal" @change="if(logVal==='custom'){ isCustom=true; logVal=''; } else if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; logVal=''; }" class="w-full bg-white/90 border border-slate-200 rounded p-1.5 text-sm outline-none shadow-sm backdrop-blur-sm cursor-pointer">
+                    <select x-model="logVal" @change="if(logVal==='custom'){ isCustom=true; logVal=''; } else if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; logVal=''; }" class="w-full bg-white/90 border border-slate-200 rounded-lg p-2 text-sm outline-none shadow-sm backdrop-blur-sm cursor-pointer font-medium">
                       <option value="">Select quick time...</option>
                       <template x-for="i in 24"><option :value="i*5" x-text="(i*5) + ' mins'"></option></template>
                       <option value="custom">Custom...</option>
@@ -227,8 +262,8 @@
                   </template>
                   <template x-if="isCustom">
                     <form @submit.prevent="if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; isCustom=false; logVal=''; }" class="flex gap-2">
-                      <input type="number" x-model="logVal" placeholder="Amount to log..." class="w-full border border-slate-200 rounded p-1.5 text-sm outline-none bg-white/90 shadow-sm backdrop-blur-sm" autofocus>
-                      <button type="submit" class="bg-emerald-600 text-white px-3 py-1.5 rounded text-sm shadow-sm hover:bg-emerald-700">Save</button>
+                      <input type="number" x-model="logVal" placeholder="Amount..." class="w-full border border-slate-200 rounded-lg p-2 text-sm outline-none bg-white/90 shadow-sm backdrop-blur-sm font-medium" autofocus>
+                      <button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-emerald-700 transition-colors">Save</button>
                     </form>
                   </template>
                 </div>
@@ -259,16 +294,13 @@
                     </div>
                   </div>
                   <div class="shrink-0 flex items-center relative z-20">
-                    <template x-if="!isEditing && (habit.progress || 0) < getSmartTarget(habit.target) && habit.goalType !== 'checkoff'">
-                      <button @click.stop="showLog = !showLog; isCustom = false;" class="ml-2 text-xs border border-slate-200 bg-white/90 rounded px-2 py-1 text-slate-500 shadow-sm hover:bg-white transition-all">Log</button>
-                    </template>
                     <template x-if="isEditing"><button @click.stop="deleteHabitGroup(habit.title)" class="text-red-400 font-bold ml-3 bg-white/80 px-2 py-1 rounded backdrop-blur-sm">&times;</button></template>
                   </div>
                 </div>
                 <!-- Log Dropdown -->
                 <div x-show="showLog" x-cloak x-collapse class="mt-3 pt-3 border-t border-slate-200/50 relative z-20">
                   <template x-if="!isCustom">
-                    <select x-model="logVal" @change="if(logVal==='custom'){ isCustom=true; logVal=''; } else if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; logVal=''; }" class="w-full bg-white/90 border border-slate-200 rounded p-1.5 text-sm outline-none shadow-sm backdrop-blur-sm cursor-pointer">
+                    <select x-model="logVal" @change="if(logVal==='custom'){ isCustom=true; logVal=''; } else if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; logVal=''; }" class="w-full bg-white/90 border border-slate-200 rounded-lg p-2 text-sm outline-none shadow-sm backdrop-blur-sm cursor-pointer font-medium">
                       <option value="">Select quick time...</option>
                       <template x-for="i in 24"><option :value="i*5" x-text="(i*5) + ' mins'"></option></template>
                       <option value="custom">Custom...</option>
@@ -276,8 +308,8 @@
                   </template>
                   <template x-if="isCustom">
                     <form @submit.prevent="if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; isCustom=false; logVal=''; }" class="flex gap-2">
-                      <input type="number" x-model="logVal" placeholder="Amount to log..." class="w-full border border-slate-200 rounded p-1.5 text-sm outline-none bg-white/90 shadow-sm backdrop-blur-sm" autofocus>
-                      <button type="submit" class="bg-emerald-600 text-white px-3 py-1.5 rounded text-sm shadow-sm hover:bg-emerald-700">Save</button>
+                      <input type="number" x-model="logVal" placeholder="Amount..." class="w-full border border-slate-200 rounded-lg p-2 text-sm outline-none bg-white/90 shadow-sm backdrop-blur-sm font-medium" autofocus>
+                      <button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-emerald-700 transition-colors">Save</button>
                     </form>
                   </template>
                 </div>
@@ -308,16 +340,13 @@
                     </div>
                   </div>
                   <div class="shrink-0 flex items-center relative z-20">
-                    <template x-if="!isEditing && (habit.progress || 0) < getSmartTarget(habit.target) && habit.goalType !== 'checkoff'">
-                      <button @click.stop="showLog = !showLog; isCustom = false;" class="ml-2 text-xs border border-slate-200 bg-white/90 rounded px-2 py-1 text-slate-500 shadow-sm hover:bg-white transition-all">Log</button>
-                    </template>
                     <template x-if="isEditing"><button @click.stop="deleteHabitGroup(habit.title)" class="text-red-400 font-bold ml-3 bg-white/80 px-2 py-1 rounded backdrop-blur-sm">&times;</button></template>
                   </div>
                 </div>
                 <!-- Log Dropdown -->
                 <div x-show="showLog" x-cloak x-collapse class="mt-3 pt-3 border-t border-slate-200/50 relative z-20">
                   <template x-if="!isCustom">
-                    <select x-model="logVal" @change="if(logVal==='custom'){ isCustom=true; logVal=''; } else if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; logVal=''; }" class="w-full bg-white/90 border border-slate-200 rounded p-1.5 text-sm outline-none shadow-sm backdrop-blur-sm cursor-pointer">
+                    <select x-model="logVal" @change="if(logVal==='custom'){ isCustom=true; logVal=''; } else if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; logVal=''; }" class="w-full bg-white/90 border border-slate-200 rounded-lg p-2 text-sm outline-none shadow-sm backdrop-blur-sm cursor-pointer font-medium">
                       <option value="">Select quick time...</option>
                       <template x-for="i in 24"><option :value="i*5" x-text="(i*5) + ' mins'"></option></template>
                       <option value="custom">Custom...</option>
@@ -325,8 +354,8 @@
                   </template>
                   <template x-if="isCustom">
                     <form @submit.prevent="if(logVal){ logTime(habit, parseInt(logVal)); showLog=false; isCustom=false; logVal=''; }" class="flex gap-2">
-                      <input type="number" x-model="logVal" placeholder="Amount to log..." class="w-full border border-slate-200 rounded p-1.5 text-sm outline-none bg-white/90 shadow-sm backdrop-blur-sm" autofocus>
-                      <button type="submit" class="bg-emerald-600 text-white px-3 py-1.5 rounded text-sm shadow-sm hover:bg-emerald-700">Save</button>
+                      <input type="number" x-model="logVal" placeholder="Amount..." class="w-full border border-slate-200 rounded-lg p-2 text-sm outline-none bg-white/90 shadow-sm backdrop-blur-sm font-medium" autofocus>
+                      <button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-emerald-700 transition-colors">Save</button>
                     </form>
                   </template>
                 </div>
@@ -399,7 +428,7 @@
       <div class="space-y-6">
         
         <!-- Title Input -->
-        <input x-model="newHabitForm.title" type="text" placeholder="Morning meditation..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-xl outline-none focus:border-emerald-500 focus:bg-white font-medium text-slate-800 shadow-inner transition-colors">
+        <input x-model="newHabitForm.title" type="text" placeholder="Goal name..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-xl outline-none focus:border-emerald-500 focus:bg-white font-medium text-slate-800 shadow-inner transition-colors">
         
         <!-- Category & Goal Type Dropdowns -->
         <div class="grid grid-cols-2 gap-4">
@@ -408,51 +437,74 @@
           </select>
           <select x-model="newHabitForm.goalType" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 font-medium text-slate-700">
             <option value="checkoff">None (Checkoff)</option>
+            <option value="subtasks">Subtasks (Checklist)</option>
             <option value="duration">Duration (Time)</option>
             <option value="frequency">Frequency (Events)</option>
           </select>
+        </div>
+
+        <!-- Dynamic Subtasks Builder -->
+        <div x-show="newHabitForm.goalType === 'subtasks'" x-collapse class="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-inner space-y-3">
+           <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Subtasks for Daily Goal</label>
+           <template x-for="(st, i) in newHabitForm.subtasks" :key="i">
+              <div class="flex gap-2">
+                 <input type="text" x-model="st.text" placeholder="e.g. Read devotional..." class="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none font-medium">
+                 <button @click="newHabitForm.subtasks.splice(i, 1)" class="w-9 h-9 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-colors">&times;</button>
+              </div>
+           </template>
+           <button @click="newHabitForm.subtasks.push({text: '', done: false})" class="text-xs text-emerald-600 font-bold hover:text-emerald-700 px-1 py-2 transition-colors">+ Add Subtask</button>
         </div>
 
         <!-- Timeframes & Goals Stack -->
         <div class="space-y-3 bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-inner">
           
           <!-- Daily Row -->
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
             <input type="checkbox" x-model="newHabitForm.timeframes.daily.active" class="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 shrink-0 cursor-pointer">
             <span class="text-sm font-bold text-slate-700 w-16 shrink-0">Daily</span>
-            <select x-show="newHabitForm.timeframes.daily.active" x-model="newHabitForm.timeframes.daily.timeOfDay" class="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none font-medium">
-              <option value="morning">Morning</option>
-              <option value="afternoon">Afternoon</option>
-              <option value="evening">Evening</option>
-              <option value="day">Anytime</option>
-            </select>
-            <!-- Daily target hidden if checkoff (implicitly 1) -->
-            <input x-show="newHabitForm.timeframes.daily.active && newHabitForm.goalType !== 'checkoff'" x-model="newHabitForm.timeframes.daily.target" type="text" placeholder="Amt" class="w-20 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none text-center font-medium">
+            <div class="flex-1 flex gap-2">
+                <select x-show="newHabitForm.timeframes.daily.active" x-model="newHabitForm.timeframes.daily.timeOfDay" class="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-2 text-sm outline-none font-medium">
+                <option value="morning">Morning</option>
+                <option value="afternoon">Afternoon</option>
+                <option value="evening">Evening</option>
+                <option value="day">Anytime</option>
+                </select>
+                <!-- Daily target hidden if checkoff OR subtasks -->
+                <input x-show="newHabitForm.timeframes.daily.active && newHabitForm.goalType !== 'checkoff' && newHabitForm.goalType !== 'subtasks'" x-model="newHabitForm.timeframes.daily.target" type="text" placeholder="Amt" class="w-20 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none text-center font-medium">
+            </div>
           </div>
 
           <!-- Weekly Row -->
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
             <input type="checkbox" x-model="newHabitForm.timeframes.weekly.active" class="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 shrink-0 cursor-pointer">
             <span class="text-sm font-bold text-slate-700 w-16 shrink-0">Weekly</span>
             <div class="flex-1"></div>
-            <!-- Weekly/Monthly/Yearly targets shown for ALL types because you can checkoff multiple times a week -->
-            <input x-show="newHabitForm.timeframes.weekly.active" x-model="newHabitForm.timeframes.weekly.target" type="text" placeholder="Amt or 'week'" class="w-28 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none text-center font-medium placeholder:text-slate-300">
+            <div x-show="newHabitForm.timeframes.weekly.active" class="flex gap-2">
+               <button type="button" @click="newHabitForm.timeframes.weekly.target = 'week'" class="bg-slate-200 hover:bg-slate-300 text-slate-600 text-xs font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">1 Wk</button>
+               <input x-model="newHabitForm.timeframes.weekly.target" type="text" placeholder="Amt..." class="w-28 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none text-center font-medium placeholder:text-slate-300">
+            </div>
           </div>
 
           <!-- Monthly Row -->
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
             <input type="checkbox" x-model="newHabitForm.timeframes.monthly.active" class="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 shrink-0 cursor-pointer">
             <span class="text-sm font-bold text-slate-700 w-16 shrink-0">Monthly</span>
             <div class="flex-1"></div>
-            <input x-show="newHabitForm.timeframes.monthly.active" x-model="newHabitForm.timeframes.monthly.target" type="text" placeholder="Amt or 'month'" class="w-28 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none text-center font-medium placeholder:text-slate-300">
+            <div x-show="newHabitForm.timeframes.monthly.active" class="flex gap-2">
+               <button type="button" @click="newHabitForm.timeframes.monthly.target = 'month'" class="bg-slate-200 hover:bg-slate-300 text-slate-600 text-xs font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">1 Mo</button>
+               <input x-model="newHabitForm.timeframes.monthly.target" type="text" placeholder="Amt..." class="w-28 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none text-center font-medium placeholder:text-slate-300">
+            </div>
           </div>
 
           <!-- Yearly Row -->
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
             <input type="checkbox" x-model="newHabitForm.timeframes.yearly.active" class="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 shrink-0 cursor-pointer">
             <span class="text-sm font-bold text-slate-700 w-16 shrink-0">Yearly</span>
             <div class="flex-1"></div>
-            <input x-show="newHabitForm.timeframes.yearly.active" x-model="newHabitForm.timeframes.yearly.target" type="text" placeholder="Amt or 'year'" class="w-28 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none text-center font-medium placeholder:text-slate-300">
+            <div x-show="newHabitForm.timeframes.yearly.active" class="flex gap-2">
+               <button type="button" @click="newHabitForm.timeframes.yearly.target = 'year'" class="bg-slate-200 hover:bg-slate-300 text-slate-600 text-xs font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">1 Yr</button>
+               <input x-model="newHabitForm.timeframes.yearly.target" type="text" placeholder="Amt..." class="w-28 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none text-center font-medium placeholder:text-slate-300">
+            </div>
           </div>
 
         </div>
@@ -490,13 +542,15 @@
         profileImage: Alpine.$persist(null),
         categoryIcons: { 'Faith': '🕊️', 'Family': '👨‍👩‍👧', 'Friends/Others': '🤝', 'Health/Sleep': '🏃', 'Work': '💼', 'Home': '🏠', 'Leisure': '📖', 'Health/Sync': '❤️' },
         
+        celebration: { active: false, title: '', timeframe: '' },
+
         habits: Alpine.$persist([
           { id: 1, title: 'Read', timeframe: 'daily', timeOfDay: 'morning', category: 'Leisure', goalType: 'duration', target: 20, progress: 0, order: 0, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
           { id: 2, title: 'Read', timeframe: 'weekly', timeOfDay: 'none', category: 'Leisure', goalType: 'duration', target: 140, progress: 0, order: 1, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] }
         ]),
         
         newHabitForm: {
-          title: '', category: 'Health/Sleep', goalType: 'checkoff', days: [],
+          title: '', category: 'Health/Sleep', goalType: 'checkoff', days: [], subtasks: [{text: '', done: false}],
           timeframes: {
             daily: { active: true, timeOfDay: 'day', target: '' },
             weekly: { active: false, target: '' },
@@ -533,7 +587,12 @@
         init() {
           const today = new Date().toDateString();
           if (this.lastOpenedDate !== today) { 
-            this.habits.forEach(h => { if(h.timeframe === 'daily') h.progress = 0; }); 
+            this.habits.forEach(h => { 
+               if(h.timeframe === 'daily') {
+                  h.progress = 0; 
+                  if(h.subtaskList) h.subtaskList.forEach(st => st.done = false);
+               }
+            }); 
             this.lastOpenedDate = today; 
           }
           this.fetchHealthData();
@@ -582,23 +641,60 @@
             const isLeap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
             return isLeap ? 366 : 365; 
           }
-          return parseInt(s) || 0;
+          return parseInt(s.replace(/,/g, '')) || 0;
+        },
+
+        triggerMilestoneCelebration(habit) {
+           this.celebration = { active: true, title: habit.title, timeframe: habit.timeframe };
+           document.getElementById('celebrationSound').cloneNode().play();
+           
+           // Fire Confetti
+           var duration = 2000;
+           var end = Date.now() + duration;
+           (function frame() {
+              confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#10b981', '#34d399', '#ffffff'] });
+              confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#10b981', '#34d399', '#ffffff'] });
+              if (Date.now() < end) requestAnimationFrame(frame);
+           }());
+
+           // Auto close after a few seconds
+           setTimeout(() => { this.celebration.active = false; }, 3500);
         },
 
         logTime(habit, amount) {
           if (!amount || isNaN(amount)) return;
           const groupTitle = habit.title.toLowerCase().trim();
           
+          let achievedMilestone = null;
+          let dailyFinished = false;
+
           this.habits = this.habits.map(h => {
             if (h.title.toLowerCase().trim() === groupTitle) {
-              const newProgress = Math.max(0, (h.progress || 0) + amount);
+              const oldProgress = h.progress || 0;
+              const newProgress = Math.max(0, oldProgress + amount);
+              const target = this.getSmartTarget(h.target);
+              
+              // If this exact log pushes progress across the target line for the first time
+              if (newProgress >= target && oldProgress < target) {
+                 if (h.timeframe === 'daily') {
+                    dailyFinished = true;
+                 } else {
+                    achievedMilestone = h; // Prioritize logging the largest milestone
+                 }
+              }
+
               return { ...h, progress: newProgress };
             }
             return h;
           });
           
+          // Sound & Celebration Logic
           if (amount > 0) {
-             document.getElementById('clickSound').cloneNode().play();
+             if (achievedMilestone) {
+                this.triggerMilestoneCelebration(achievedMilestone);
+             } else if (dailyFinished) {
+                document.getElementById('clickSound').cloneNode().play();
+             }
           }
         },
 
@@ -606,24 +702,29 @@
           const target = this.getSmartTarget(habit.target);
           const current = habit.progress || 0;
           const isComplete = current >= target;
-          
           let increment = 0;
 
           if (isComplete) {
-            if (habit.goalType === 'duration') {
-                increment = -target;
-            } else {
-                increment = -1;
-            }
+            if (habit.goalType === 'duration') increment = -target;
+            else increment = -1;
           } else {
-            if (habit.goalType === 'duration') {
-                increment = target - current;
-            } else {
-                increment = 1;
-            }
+            if (habit.goalType === 'duration') increment = target - current;
+            else increment = 1;
           }
           
           this.logTime(habit, increment);
+        },
+
+        toggleSubtask(habitId, stIndex) {
+           const h = this.habits.find(x => x.id === habitId);
+           if (!h || !h.subtaskList) return;
+           
+           const isDone = h.subtaskList[stIndex].done;
+           h.subtaskList[stIndex].done = !isDone;
+           
+           // Logging 1 or -1 cascaded perfectly to the rest of the groups
+           const amount = !isDone ? 1 : -1;
+           this.logTime(h, amount);
         },
 
         get combinedHabits() {
@@ -646,12 +747,10 @@
           } else {
             items = this.combinedHabits.filter(h => h.timeframe === timeframe);
           }
-          
           if(items.length === 0) return 0;
           
           let totalTarget = 0;
           let totalProgress = 0;
-          
           items.forEach(h => {
             const t = this.getSmartTarget(h.target);
             totalTarget += t;
@@ -700,7 +799,7 @@
         openAddModal() { 
           this.editingHabitTitle = null; 
           this.newHabitForm = { 
-            title: '', category: 'Health/Sleep', goalType: 'checkoff', days: [...this.daysOfWeek],
+            title: '', category: 'Health/Sleep', goalType: 'checkoff', days: [...this.daysOfWeek], subtasks: [{text: '', done: false}],
             timeframes: {
                daily: { active: true, timeOfDay: 'day', target: '' },
                weekly: { active: false, target: '' },
@@ -713,7 +812,6 @@
         
         openEditModal(h) { 
           this.editingHabitTitle = h.title.toLowerCase().trim();
-          
           const group = this.habits.filter(item => item.title.toLowerCase().trim() === this.editingHabitTitle);
           const base = group[0];
           
@@ -722,6 +820,7 @@
             category: base.category || 'Health/Sleep', 
             goalType: base.goalType || 'checkoff', 
             days: base.days ? [...base.days] : [...this.daysOfWeek],
+            subtasks: base.subtaskList ? JSON.parse(JSON.stringify(base.subtaskList)) : [{text: '', done: false}],
             timeframes: {
                daily: { active: false, timeOfDay: 'day', target: '' },
                weekly: { active: false, target: '' },
@@ -747,9 +846,15 @@
           const form = this.newHabitForm;
           if (!form.title.trim()) return;
           
+          // Clean empty subtasks
+          if (form.goalType === 'subtasks') {
+             form.subtasks = form.subtasks.filter(st => st.text.trim() !== '');
+             if (form.subtasks.length === 0) return; // Prevent saving empty checklist
+          }
+
           const groupTitle = form.title.toLowerCase().trim();
-          
           let oldProgressMap = {};
+          
           if (this.editingHabitTitle) {
              const oldHabits = this.habits.filter(h => h.title.toLowerCase().trim() === this.editingHabitTitle);
              oldHabits.forEach(h => { oldProgressMap[h.timeframe] = h.progress; });
@@ -759,7 +864,14 @@
           Object.keys(form.timeframes).forEach(tf => {
              const tfData = form.timeframes[tf];
              if (tfData.active) {
-                const targetVal = (tf === 'daily' && form.goalType === 'checkoff') ? 1 : tfData.target;
+                let targetVal = tfData.target;
+                
+                // Logic overrides for Daily Targets
+                if (tf === 'daily') {
+                   if (form.goalType === 'checkoff') targetVal = 1;
+                   if (form.goalType === 'subtasks') targetVal = form.subtasks.length;
+                }
+                
                 const progressVal = oldProgressMap[tf] || 0;
                 
                 this.habits.push({
@@ -772,6 +884,7 @@
                    target: targetVal,
                    progress: progressVal,
                    days: [...form.days],
+                   subtaskList: (tf === 'daily' && form.goalType === 'subtasks') ? JSON.parse(JSON.stringify(form.subtasks)) : null,
                    order: 999
                 });
              }
