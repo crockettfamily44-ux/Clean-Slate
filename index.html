@@ -627,11 +627,17 @@
            this.celebration = { active: true, title: habit.title, timeframe: habit.timeframe };
            
            if (habit.timeframe === 'weekly') {
-               document.getElementById('weeklySound').cloneNode().play();
+               const sound = document.getElementById('weeklySound');
+               sound.currentTime = 0;
+               sound.play().catch(e => {});
            } else if (habit.timeframe === 'monthly') {
-               document.getElementById('monthlySound').cloneNode().play();
+               const sound = document.getElementById('monthlySound');
+               sound.currentTime = 0;
+               sound.play().catch(e => {});
            } else if (habit.timeframe === 'yearly') {
-               document.getElementById('yearlySound').cloneNode().play();
+               const sound = document.getElementById('yearlySound');
+               sound.currentTime = 0;
+               sound.play().catch(e => {});
            }
            
            var duration = 2000;
@@ -674,7 +680,9 @@
              if (achievedMilestone) {
                 this.triggerMilestoneCelebration(achievedMilestone);
              } else if (dailyFinished) {
-                document.getElementById('clickSound').cloneNode().play();
+                const click = document.getElementById('clickSound');
+                click.currentTime = 0;
+                click.play().catch(e => {});
              }
           }
         },
